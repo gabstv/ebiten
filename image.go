@@ -568,6 +568,12 @@ func (i *Image) ReplacePixelsEx(fatpixels []color.RGBA) {
 	if err := i.buffered.ReplacePixels(pixels, r.Min.X, r.Min.Y, r.Dx(), r.Dy()); err != nil {
 		theUIContext.setError(err)
 	}
+
+	// fix the slice header because it might be used by the caller
+	shdr = (*sliceHeader)(unsafe.Pointer(&fatpixels))
+	shdr.Len = len4
+	shdr.Cap = len4
+
 	return
 }
 
