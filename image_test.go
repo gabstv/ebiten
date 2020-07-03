@@ -375,6 +375,77 @@ func TestImageReplacePixelsNil(t *testing.T) {
 	img.ReplacePixels(nil)
 }
 
+func TestImageReplacePixelsEx(t *testing.T) {
+	// Create a dummy image so that the shared texture is used and origImg's position is shfited.
+	dummyImg, _ := NewImageFromImage(image.NewRGBA(image.Rect(0, 0, 16, 16)), FilterDefault)
+	defer dummyImg.Dispose()
+
+	_, origImg, err := openEbitenImage()
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+	// Convert to *image.RGBA just in case.
+	img := image.NewRGBA(origImg.Bounds())
+	draw.Draw(img, img.Bounds(), origImg, image.ZP, draw.Src)
+
+	size := img.Bounds().Size()
+	img0, err := NewImage(size.X, size.Y, FilterNearest)
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+
+	fatpixels := make([]color.RGBA, len(img.Pix)/4)
+	for i := 0; i < len(fatpixels); i++ {
+		fatpixels[i] = color.RGBA{
+			R: img.Pix[i*4],
+			G: img.Pix[i*4+1],
+			B: img.Pix[i*4+2],
+			A: img.Pix[i*4+3],
+		}
+	}
+	img0.ReplacePixelsEx(fatpixels)
+	for j := 0; j < img0.Bounds().Size().Y; j++ {
+		for i := 0; i < img0.Bounds().Size().X; i++ {
+			got := img0.At(i, j)
+			want := img.At(i, j)
+			if got != want {
+				t.Errorf("img0 At(%d, %d): got %#v; want %#v", i, j, got, want)
+			}
+		}
+	}
+
+	p := make([]color.RGBA, size.X*size.Y)
+	for i := range p {
+		p[i] = color.RGBA{
+			R: 0x80,
+			G: 0x80,
+			B: 0x80,
+			A: 0x80,
+		}
+	}
+	img0.ReplacePixelsEx(p)
+	// Even if p is changed after calling ReplacePixel, img0 uses the original values.
+	for i := range p {
+		p[i] = color.RGBA{
+			R: 0,
+			G: 0,
+			B: 0,
+			A: 0,
+		}
+	}
+	for j := 0; j < img0.Bounds().Size().Y; j++ {
+		for i := 0; i < img0.Bounds().Size().X; i++ {
+			got := img0.At(i, j)
+			want := color.RGBA{0x80, 0x80, 0x80, 0x80}
+			if got != want {
+				t.Errorf("img0 At(%d, %d): got %#v; want %#v", i, j, got, want)
+			}
+		}
+	}
+}
+
 func TestImageDispose(t *testing.T) {
 	img, err := NewImage(16, 16, FilterNearest)
 	if err != nil {

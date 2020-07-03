@@ -17,6 +17,7 @@ package ebiten
 import (
 	"image"
 	"image/color"
+	"unsafe"
 
 	"github.com/hajimehoshi/ebiten/internal/buffered"
 	"github.com/hajimehoshi/ebiten/internal/driver"
@@ -526,6 +527,48 @@ func (i *Image) Dispose() error {
 	i.buffered.MarkDisposed()
 	i.buffered = nil
 	return nil
+}
+
+// extracted from reflect
+type sliceHeader struct {
+	Data uintptr
+	Len  int
+	Cap  int
+}
+
+// ReplacePixelsEx replaces the pixels of the image with p.
+//
+// The given p must represent RGBA pre-multiplied alpha values.
+// len(pix) must equal to 4 * (bounds width) * (bounds height).
+//
+// ReplacePixelsEx works on a sub-image.
+//
+// When len(pix) is not appropriate, ReplacePixelsEx panics.
+//
+// When the image is disposed, ReplacePixelsEx does nothing.
+func (i *Image) ReplacePixelsEx(fatpixels []color.RGBA) {
+	i.copyCheck()
+
+	if i.isDisposed() {
+		return
+	}
+	r := i.Bounds()
+
+	len4 := len(fatpixels)
+
+	shdr := (*sliceHeader)(unsafe.Pointer(&fatpixels))
+	shdr.Len = len4 * 4
+	shdr.Cap = len4 * 4
+
+	pixels := *(*[]uint8)(unsafe.Pointer(&fatpixels))
+
+	// Do not need to copy pixels here.
+	// * In internal/buffered, pixels are copied when necessary.
+	// * In internal/shareable, pixels are copied to make its paddings.
+	if err := i.buffered.ReplacePixels(pixels, r.Min.X, r.Min.Y, r.Dx(), r.Dy()); err != nil {
+		theUIContext.setError(err)
+	}
+	return
 }
 
 // ReplacePixels replaces the pixels of the image with p.
