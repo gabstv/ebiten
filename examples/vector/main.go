@@ -22,9 +22,9 @@ import (
 	"log"
 	"math"
 
-	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/ebitenutil"
-	"github.com/hajimehoshi/ebiten/vector"
+	"github.com/gabstv/ebiten"
+	"github.com/gabstv/ebiten/ebitenutil"
+	"github.com/gabstv/ebiten/vector"
 )
 
 const (

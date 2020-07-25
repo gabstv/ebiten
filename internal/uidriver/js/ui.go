@@ -22,12 +22,12 @@ import (
 	"syscall/js"
 	"time"
 
-	"github.com/hajimehoshi/ebiten/internal/devicescale"
-	"github.com/hajimehoshi/ebiten/internal/driver"
-	"github.com/hajimehoshi/ebiten/internal/graphicsdriver/opengl"
-	"github.com/hajimehoshi/ebiten/internal/hooks"
-	"github.com/hajimehoshi/ebiten/internal/jsutil"
-	"github.com/hajimehoshi/ebiten/internal/restorable"
+	"github.com/gabstv/ebiten/internal/devicescale"
+	"github.com/gabstv/ebiten/internal/driver"
+	"github.com/gabstv/ebiten/internal/graphicsdriver/opengl"
+	"github.com/gabstv/ebiten/internal/hooks"
+	"github.com/gabstv/ebiten/internal/jsutil"
+	"github.com/gabstv/ebiten/internal/restorable"
 )
 
 type UserInterface struct {

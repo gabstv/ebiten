@@ -20,12 +20,12 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/hajimehoshi/ebiten/internal/affine"
-	"github.com/hajimehoshi/ebiten/internal/driver"
-	"github.com/hajimehoshi/ebiten/internal/graphics"
-	"github.com/hajimehoshi/ebiten/internal/hooks"
-	"github.com/hajimehoshi/ebiten/internal/packing"
-	"github.com/hajimehoshi/ebiten/internal/restorable"
+	"github.com/gabstv/ebiten/internal/affine"
+	"github.com/gabstv/ebiten/internal/driver"
+	"github.com/gabstv/ebiten/internal/graphics"
+	"github.com/gabstv/ebiten/internal/hooks"
+	"github.com/gabstv/ebiten/internal/packing"
+	"github.com/gabstv/ebiten/internal/restorable"
 )
 
 const (

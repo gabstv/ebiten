@@ -17,11 +17,11 @@ package opengl
 import (
 	"fmt"
 
-	"github.com/hajimehoshi/ebiten/internal/affine"
-	"github.com/hajimehoshi/ebiten/internal/driver"
-	"github.com/hajimehoshi/ebiten/internal/graphics"
-	"github.com/hajimehoshi/ebiten/internal/shaderir"
-	"github.com/hajimehoshi/ebiten/internal/thread"
+	"github.com/gabstv/ebiten/internal/affine"
+	"github.com/gabstv/ebiten/internal/driver"
+	"github.com/gabstv/ebiten/internal/graphics"
+	"github.com/gabstv/ebiten/internal/shaderir"
+	"github.com/gabstv/ebiten/internal/thread"
 )
 
 var theGraphics Graphics

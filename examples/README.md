@@ -3,7 +3,7 @@
 ## Desktops
 
 ```sh
-go run -tags=example $GOPATH/src/github.com/hajimehoshi/ebiten/examples/rotate/main.go
+go run -tags=example $GOPATH/src/github.com/gabstv/ebiten/examples/rotate/main.go
 ```
 
 ## Web Browsers
@@ -12,20 +12,20 @@ go run -tags=example $GOPATH/src/github.com/hajimehoshi/ebiten/examples/rotate/m
 gopherjs serve --tags=example
 ```
 
-and access `http://127.0.0.1:8080/github.com/hajimehoshi/ebiten/examples`.
+and access `http://127.0.0.1:8080/github.com/gabstv/ebiten/examples`.
 
 ## Android
 
 Install [gomobile](https://pkg.go.dev/golang.org/x/mobile/cmd/gomobile) first.
 
 ```sh
-gomobile install -tags=example github.com/hajimehoshi/ebiten/examples/rotate
+gomobile install -tags=example github.com/gabstv/ebiten/examples/rotate
 ```
 
 ## iOS
 
 ```sh
-gomobile build -target=ios -tags=example -work github.com/hajimehoshi/ebiten/examples/rotate
+gomobile build -target=ios -tags=example -work github.com/gabstv/ebiten/examples/rotate
 ```
 
 Then, open the `WORK` directory, open `main.xcodeproj`, add signing, and run the project.

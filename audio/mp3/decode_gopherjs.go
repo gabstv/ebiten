@@ -26,7 +26,7 @@ import (
 	"syscall/js"
 	"time"
 
-	"github.com/hajimehoshi/ebiten/audio"
+	"github.com/gabstv/ebiten/audio"
 )
 
 // TODO: This just uses decodeAudioData, that can treat audio files other than MP3.

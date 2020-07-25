@@ -19,8 +19,8 @@ import (
 	"image"
 	_ "image/png"
 
-	"github.com/hajimehoshi/ebiten"
-	rblocks "github.com/hajimehoshi/ebiten/examples/resources/images/blocks"
+	"github.com/gabstv/ebiten"
+	rblocks "github.com/gabstv/ebiten/examples/resources/images/blocks"
 )
 
 var imageBlocks *ebiten.Image

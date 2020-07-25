@@ -17,9 +17,9 @@ package opengl
 import (
 	"fmt"
 
-	"github.com/hajimehoshi/ebiten/internal/driver"
-	"github.com/hajimehoshi/ebiten/internal/graphics"
-	"github.com/hajimehoshi/ebiten/internal/web"
+	"github.com/gabstv/ebiten/internal/driver"
+	"github.com/gabstv/ebiten/internal/graphics"
+	"github.com/gabstv/ebiten/internal/web"
 )
 
 // arrayBufferLayoutPart is a part of an array buffer layout.

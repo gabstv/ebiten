@@ -19,8 +19,8 @@ import (
 	"math"
 	"testing"
 
-	"github.com/hajimehoshi/ebiten/audio"
-	. "github.com/hajimehoshi/ebiten/audio/internal/convert"
+	"github.com/gabstv/ebiten/audio"
+	. "github.com/gabstv/ebiten/audio/internal/convert"
 )
 
 func soundAt(timeInSecond float64) float64 {

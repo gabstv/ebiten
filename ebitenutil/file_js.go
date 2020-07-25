@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"syscall/js"
 
-	"github.com/hajimehoshi/ebiten/internal/jsutil"
+	"github.com/gabstv/ebiten/internal/jsutil"
 )
 
 type file struct {

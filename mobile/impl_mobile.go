@@ -17,7 +17,7 @@
 package mobile
 
 import (
-	"github.com/hajimehoshi/ebiten/mobile/ebitenmobileview"
+	"github.com/gabstv/ebiten/mobile/ebitenmobileview"
 )
 
 func setGame(game Game) {

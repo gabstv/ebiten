@@ -20,8 +20,8 @@ import (
 	"sync"
 	"unsafe"
 
-	"github.com/hajimehoshi/ebiten/internal/graphicsdriver/metal/ca"
-	"github.com/hajimehoshi/ebiten/internal/graphicsdriver/metal/mtl"
+	"github.com/gabstv/ebiten/internal/graphicsdriver/metal/ca"
+	"github.com/gabstv/ebiten/internal/graphicsdriver/metal/mtl"
 )
 
 type view struct {

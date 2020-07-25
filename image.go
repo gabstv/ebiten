@@ -19,9 +19,9 @@ import (
 	"image"
 	"image/color"
 
-	"github.com/hajimehoshi/ebiten/internal/buffered"
-	"github.com/hajimehoshi/ebiten/internal/driver"
-	"github.com/hajimehoshi/ebiten/internal/graphics"
+	"github.com/gabstv/ebiten/internal/buffered"
+	"github.com/gabstv/ebiten/internal/driver"
+	"github.com/gabstv/ebiten/internal/graphics"
 )
 
 // Image represents a rectangle set of pixels.

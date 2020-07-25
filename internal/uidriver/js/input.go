@@ -21,8 +21,8 @@ import (
 	"syscall/js"
 	"unicode"
 
-	"github.com/hajimehoshi/ebiten/internal/driver"
-	"github.com/hajimehoshi/ebiten/internal/jsutil"
+	"github.com/gabstv/ebiten/internal/driver"
+	"github.com/gabstv/ebiten/internal/jsutil"
 )
 
 type pos struct {

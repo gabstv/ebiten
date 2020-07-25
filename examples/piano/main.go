@@ -25,12 +25,12 @@ import (
 	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/font"
 
-	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/audio"
-	"github.com/hajimehoshi/ebiten/ebitenutil"
-	"github.com/hajimehoshi/ebiten/examples/resources/fonts"
-	"github.com/hajimehoshi/ebiten/inpututil"
-	"github.com/hajimehoshi/ebiten/text"
+	"github.com/gabstv/ebiten"
+	"github.com/gabstv/ebiten/audio"
+	"github.com/gabstv/ebiten/ebitenutil"
+	"github.com/gabstv/ebiten/examples/resources/fonts"
+	"github.com/gabstv/ebiten/inpututil"
+	"github.com/gabstv/ebiten/text"
 )
 
 var (

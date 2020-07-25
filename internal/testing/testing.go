@@ -19,8 +19,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/internal/testflock"
+	"github.com/gabstv/ebiten"
+	"github.com/gabstv/ebiten/internal/testflock"
 )
 
 var regularTermination = errors.New("regular termination")

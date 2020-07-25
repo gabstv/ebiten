@@ -20,8 +20,8 @@ package vorbis
 import (
 	"io/ioutil"
 
-	"github.com/hajimehoshi/ebiten/audio"
-	"github.com/hajimehoshi/ebiten/audio/vorbis/internal/stb"
+	"github.com/gabstv/ebiten/audio"
+	"github.com/gabstv/ebiten/audio/vorbis/internal/stb"
 )
 
 type decoderImpl struct {

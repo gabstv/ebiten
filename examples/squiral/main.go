@@ -25,9 +25,9 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/ebitenutil"
-	"github.com/hajimehoshi/ebiten/inpututil"
+	"github.com/gabstv/ebiten"
+	"github.com/gabstv/ebiten/ebitenutil"
+	"github.com/gabstv/ebiten/inpututil"
 )
 
 const (

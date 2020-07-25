@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"go/ast"
 
-	"github.com/hajimehoshi/ebiten/internal/shaderir"
+	"github.com/gabstv/ebiten/internal/shaderir"
 )
 
 // TODO: What about array types?

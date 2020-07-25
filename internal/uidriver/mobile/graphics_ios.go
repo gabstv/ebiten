@@ -20,9 +20,9 @@ package mobile
 import (
 	"fmt"
 
-	"github.com/hajimehoshi/ebiten/internal/driver"
-	"github.com/hajimehoshi/ebiten/internal/graphicsdriver/metal"
-	"github.com/hajimehoshi/ebiten/internal/graphicsdriver/metal/mtl"
+	"github.com/gabstv/ebiten/internal/driver"
+	"github.com/gabstv/ebiten/internal/graphicsdriver/metal"
+	"github.com/gabstv/ebiten/internal/graphicsdriver/metal/mtl"
 )
 
 func (*UserInterface) Graphics() driver.Graphics {

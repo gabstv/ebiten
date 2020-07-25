@@ -22,7 +22,7 @@ import (
 
 	mgl "golang.org/x/mobile/gl"
 
-	"github.com/hajimehoshi/ebiten/internal/driver"
+	"github.com/gabstv/ebiten/internal/driver"
 )
 
 type (

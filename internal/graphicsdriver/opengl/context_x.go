@@ -21,7 +21,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/hajimehoshi/ebiten/internal/graphicsdriver/opengl/gl"
+	"github.com/gabstv/ebiten/internal/graphicsdriver/opengl/gl"
 )
 
 var (

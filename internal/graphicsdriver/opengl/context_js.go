@@ -21,9 +21,9 @@ import (
 	"fmt"
 	"syscall/js"
 
-	"github.com/hajimehoshi/ebiten/internal/driver"
-	"github.com/hajimehoshi/ebiten/internal/jsutil"
-	"github.com/hajimehoshi/ebiten/internal/web"
+	"github.com/gabstv/ebiten/internal/driver"
+	"github.com/gabstv/ebiten/internal/jsutil"
+	"github.com/gabstv/ebiten/internal/web"
 )
 
 type (

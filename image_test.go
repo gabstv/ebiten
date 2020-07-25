@@ -25,11 +25,11 @@ import (
 	"runtime"
 	"testing"
 
-	. "github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/examples/resources/images"
-	"github.com/hajimehoshi/ebiten/internal/graphics"
-	t "github.com/hajimehoshi/ebiten/internal/testing"
-	"github.com/hajimehoshi/ebiten/internal/web"
+	. "github.com/gabstv/ebiten"
+	"github.com/gabstv/ebiten/examples/resources/images"
+	"github.com/gabstv/ebiten/internal/graphics"
+	t "github.com/gabstv/ebiten/internal/testing"
+	"github.com/gabstv/ebiten/internal/web"
 )
 
 func TestMain(m *testing.M) {

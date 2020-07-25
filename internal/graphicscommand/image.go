@@ -20,10 +20,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/hajimehoshi/ebiten/internal/affine"
-	"github.com/hajimehoshi/ebiten/internal/driver"
-	"github.com/hajimehoshi/ebiten/internal/graphics"
-	"github.com/hajimehoshi/ebiten/internal/png"
+	"github.com/gabstv/ebiten/internal/affine"
+	"github.com/gabstv/ebiten/internal/driver"
+	"github.com/gabstv/ebiten/internal/graphics"
+	"github.com/gabstv/ebiten/internal/png"
 )
 
 type lastCommand int

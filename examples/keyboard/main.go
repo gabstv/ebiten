@@ -23,10 +23,10 @@ import (
 	"log"
 	"strings"
 
-	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/ebitenutil"
-	"github.com/hajimehoshi/ebiten/examples/keyboard/keyboard"
-	rkeyabord "github.com/hajimehoshi/ebiten/examples/resources/images/keyboard"
+	"github.com/gabstv/ebiten"
+	"github.com/gabstv/ebiten/ebitenutil"
+	"github.com/gabstv/ebiten/examples/keyboard/keyboard"
+	rkeyabord "github.com/gabstv/ebiten/examples/resources/images/keyboard"
 )
 
 const (

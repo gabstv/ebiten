@@ -21,8 +21,8 @@ import (
 	"image"
 	"log"
 
-	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/ebitenutil"
+	"github.com/gabstv/ebiten"
+	"github.com/gabstv/ebiten/ebitenutil"
 )
 
 const (

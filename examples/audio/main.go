@@ -26,14 +26,14 @@ import (
 	"log"
 	"time"
 
-	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/audio"
-	"github.com/hajimehoshi/ebiten/audio/mp3"
-	"github.com/hajimehoshi/ebiten/audio/vorbis"
-	"github.com/hajimehoshi/ebiten/audio/wav"
-	"github.com/hajimehoshi/ebiten/ebitenutil"
-	raudio "github.com/hajimehoshi/ebiten/examples/resources/audio"
-	"github.com/hajimehoshi/ebiten/inpututil"
+	"github.com/gabstv/ebiten"
+	"github.com/gabstv/ebiten/audio"
+	"github.com/gabstv/ebiten/audio/mp3"
+	"github.com/gabstv/ebiten/audio/vorbis"
+	"github.com/gabstv/ebiten/audio/wav"
+	"github.com/gabstv/ebiten/ebitenutil"
+	raudio "github.com/gabstv/ebiten/examples/resources/audio"
+	"github.com/gabstv/ebiten/inpututil"
 )
 
 const (

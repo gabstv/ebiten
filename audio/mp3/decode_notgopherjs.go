@@ -26,8 +26,8 @@ import (
 
 	"github.com/hajimehoshi/go-mp3"
 
-	"github.com/hajimehoshi/ebiten/audio"
-	"github.com/hajimehoshi/ebiten/audio/internal/convert"
+	"github.com/gabstv/ebiten/audio"
+	"github.com/gabstv/ebiten/audio/internal/convert"
 )
 
 // Stream is a decoded stream.

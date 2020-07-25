@@ -21,8 +21,8 @@ import (
 	"image/color"
 	"math"
 
-	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/vector/internal/triangulate"
+	"github.com/gabstv/ebiten"
+	"github.com/gabstv/ebiten/vector/internal/triangulate"
 )
 
 var emptyImage *ebiten.Image

@@ -18,7 +18,7 @@ import (
 	"image/color"
 	"math"
 
-	"github.com/hajimehoshi/ebiten"
+	"github.com/gabstv/ebiten"
 )
 
 var (

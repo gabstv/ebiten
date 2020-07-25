@@ -20,8 +20,8 @@ import (
 	"io"
 	"runtime"
 
-	"github.com/hajimehoshi/ebiten/audio"
-	"github.com/hajimehoshi/ebiten/audio/internal/convert"
+	"github.com/gabstv/ebiten/audio"
+	"github.com/gabstv/ebiten/audio/internal/convert"
 )
 
 // Stream is a decoded audio stream.

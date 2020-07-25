@@ -15,8 +15,8 @@
 package restorable
 
 import (
-	"github.com/hajimehoshi/ebiten/internal/graphicscommand"
-	"github.com/hajimehoshi/ebiten/internal/shaderir"
+	"github.com/gabstv/ebiten/internal/graphicscommand"
+	"github.com/gabstv/ebiten/internal/shaderir"
 )
 
 type Shader struct {

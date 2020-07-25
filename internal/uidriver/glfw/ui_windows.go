@@ -22,7 +22,7 @@ import (
 
 	"golang.org/x/sys/windows"
 
-	"github.com/hajimehoshi/ebiten/internal/glfw"
+	"github.com/gabstv/ebiten/internal/glfw"
 )
 
 const (

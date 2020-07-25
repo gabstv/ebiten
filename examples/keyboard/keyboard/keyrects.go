@@ -19,7 +19,7 @@ package keyboard
 import (
 	"image"
 
-	"github.com/hajimehoshi/ebiten"
+	"github.com/gabstv/ebiten"
 )
 
 var keyboardKeyRects = map[ebiten.Key]image.Rectangle{}

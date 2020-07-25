@@ -17,8 +17,8 @@ package ebitenutil
 import (
 	"image"
 
-	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/ebitenutil/internal/assets"
+	"github.com/gabstv/ebiten"
+	"github.com/gabstv/ebiten/ebitenutil/internal/assets"
 )
 
 var (

@@ -19,7 +19,7 @@ package ebiten
 import (
 	"strings"
 
-	"github.com/hajimehoshi/ebiten/internal/driver"
+	"github.com/gabstv/ebiten/internal/driver"
 )
 
 // A Key represents a keyboard key.

@@ -21,11 +21,11 @@ import (
 	"log"
 	"time"
 
-	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/audio"
-	"github.com/hajimehoshi/ebiten/audio/vorbis"
-	"github.com/hajimehoshi/ebiten/ebitenutil"
-	raudio "github.com/hajimehoshi/ebiten/examples/resources/audio"
+	"github.com/gabstv/ebiten"
+	"github.com/gabstv/ebiten/audio"
+	"github.com/gabstv/ebiten/audio/vorbis"
+	"github.com/gabstv/ebiten/ebitenutil"
+	raudio "github.com/gabstv/ebiten/examples/resources/audio"
 )
 
 const (

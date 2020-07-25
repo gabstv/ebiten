@@ -6,7 +6,7 @@ There are some rules for Ebiten contribution.
 
 ## Asking us when you are not sure
 
-You can ask us by [creating a GitHub issue](https://github.com/hajimehoshi/ebiten/issues/new) or at [Gophers Slack](https://invite.slack.golangbridge.org/)'s #ebiten channel.
+You can ask us by [creating a GitHub issue](https://github.com/gabstv/ebiten/issues/new) or at [Gophers Slack](https://invite.slack.golangbridge.org/)'s #ebiten channel.
 
 ## Following the Go convention
 
@@ -39,7 +39,7 @@ You don't have to update existing files' license comments.
 // +build example jsgo
 ```
 
-`example` is to prevent from installing executions by `go get github.com/hajimehoshi/ebiten/...`.
+`example` is to prevent from installing executions by `go get github.com/gabstv/ebiten/...`.
 
 `jsgo` is to make the examples work on [jsgo.io](https://jsgo.io/).
 

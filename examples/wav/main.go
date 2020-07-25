@@ -19,11 +19,11 @@ package main
 import (
 	"log"
 
-	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/audio"
-	"github.com/hajimehoshi/ebiten/audio/wav"
-	"github.com/hajimehoshi/ebiten/ebitenutil"
-	raudio "github.com/hajimehoshi/ebiten/examples/resources/audio"
+	"github.com/gabstv/ebiten"
+	"github.com/gabstv/ebiten/audio"
+	"github.com/gabstv/ebiten/audio/wav"
+	"github.com/gabstv/ebiten/ebitenutil"
+	raudio "github.com/gabstv/ebiten/examples/resources/audio"
 )
 
 const (

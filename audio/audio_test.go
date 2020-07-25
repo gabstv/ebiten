@@ -19,7 +19,7 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/hajimehoshi/ebiten/audio"
+	. "github.com/gabstv/ebiten/audio"
 )
 
 var context *Context

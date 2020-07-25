@@ -20,7 +20,7 @@ import (
 	"go/token"
 	"strings"
 
-	"github.com/hajimehoshi/ebiten/internal/shaderir"
+	"github.com/gabstv/ebiten/internal/shaderir"
 )
 
 type variable struct {

@@ -22,10 +22,10 @@ import (
 	_ "image/png"
 	"log"
 
-	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/ebitenutil"
-	resources "github.com/hajimehoshi/ebiten/examples/resources/images/shader"
-	"github.com/hajimehoshi/ebiten/inpututil"
+	"github.com/gabstv/ebiten"
+	"github.com/gabstv/ebiten/ebitenutil"
+	resources "github.com/gabstv/ebiten/examples/resources/images/shader"
+	"github.com/gabstv/ebiten/inpututil"
 )
 
 const (

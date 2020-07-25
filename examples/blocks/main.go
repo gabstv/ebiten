@@ -22,8 +22,8 @@ import (
 	"os"
 	"runtime/pprof"
 
-	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/examples/blocks/blocks"
+	"github.com/gabstv/ebiten"
+	"github.com/gabstv/ebiten/examples/blocks/blocks"
 )
 
 var cpuProfile = flag.String("cpuprofile", "", "write cpu profile to file")

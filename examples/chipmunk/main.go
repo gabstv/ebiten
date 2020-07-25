@@ -22,8 +22,8 @@ import (
 	"log"
 	"math/rand"
 
-	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/ebitenutil"
+	"github.com/gabstv/ebiten"
+	"github.com/gabstv/ebiten/ebitenutil"
 	"github.com/jakecoffman/cp"
 )
 

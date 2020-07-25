@@ -18,7 +18,7 @@ import (
 	"io"
 	"sync"
 
-	"github.com/hajimehoshi/ebiten/internal/hooks"
+	"github.com/gabstv/ebiten/internal/hooks"
 )
 
 type context interface {

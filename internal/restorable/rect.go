@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"image"
 
-	"github.com/hajimehoshi/ebiten/internal/graphicscommand"
+	"github.com/gabstv/ebiten/internal/graphicscommand"
 )
 
 type rectToPixels struct {

@@ -22,10 +22,10 @@ import (
 	"image"
 	_ "image/png"
 
-	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/ebitenutil"
-	rplatformer "github.com/hajimehoshi/ebiten/examples/resources/images/platformer"
-	"github.com/hajimehoshi/ebiten/inpututil"
+	"github.com/gabstv/ebiten"
+	"github.com/gabstv/ebiten/ebitenutil"
+	rplatformer "github.com/gabstv/ebiten/examples/resources/images/platformer"
+	"github.com/gabstv/ebiten/inpututil"
 )
 
 const (

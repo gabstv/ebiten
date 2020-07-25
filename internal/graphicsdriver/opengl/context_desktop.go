@@ -23,8 +23,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/hajimehoshi/ebiten/internal/driver"
-	"github.com/hajimehoshi/ebiten/internal/graphicsdriver/opengl/gl"
+	"github.com/gabstv/ebiten/internal/driver"
+	"github.com/gabstv/ebiten/internal/graphicsdriver/opengl/gl"
 )
 
 type (

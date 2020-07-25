@@ -20,9 +20,9 @@ import (
 	"go/parser"
 	"go/token"
 
-	"github.com/hajimehoshi/ebiten/internal/buffered"
-	"github.com/hajimehoshi/ebiten/internal/graphics"
-	"github.com/hajimehoshi/ebiten/internal/shader"
+	"github.com/gabstv/ebiten/internal/buffered"
+	"github.com/gabstv/ebiten/internal/graphics"
+	"github.com/gabstv/ebiten/internal/shader"
 )
 
 var shaderSuffix string

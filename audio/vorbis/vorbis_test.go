@@ -19,8 +19,8 @@ import (
 
 	"github.com/jfreymuth/oggvorbis"
 
-	"github.com/hajimehoshi/ebiten/audio"
-	. "github.com/hajimehoshi/ebiten/audio/vorbis"
+	"github.com/gabstv/ebiten/audio"
+	. "github.com/gabstv/ebiten/audio/vorbis"
 )
 
 var audioContext *audio.Context

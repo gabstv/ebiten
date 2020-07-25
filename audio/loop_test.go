@@ -19,7 +19,7 @@ import (
 	"math"
 	"testing"
 
-	. "github.com/hajimehoshi/ebiten/audio"
+	. "github.com/gabstv/ebiten/audio"
 )
 
 func TestInfiniteLoop(t *testing.T) {

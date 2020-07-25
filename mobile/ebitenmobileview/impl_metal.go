@@ -17,7 +17,7 @@
 package ebitenmobileview
 
 import (
-	"github.com/hajimehoshi/ebiten/internal/graphicsdriver/metal"
+	"github.com/gabstv/ebiten/internal/graphicsdriver/metal"
 )
 
 func SetUIView(uiview int64) {

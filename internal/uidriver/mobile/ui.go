@@ -31,11 +31,11 @@ import (
 	"golang.org/x/mobile/event/touch"
 	"golang.org/x/mobile/gl"
 
-	"github.com/hajimehoshi/ebiten/internal/devicescale"
-	"github.com/hajimehoshi/ebiten/internal/driver"
-	"github.com/hajimehoshi/ebiten/internal/graphicsdriver/opengl"
-	"github.com/hajimehoshi/ebiten/internal/hooks"
-	"github.com/hajimehoshi/ebiten/internal/thread"
+	"github.com/gabstv/ebiten/internal/devicescale"
+	"github.com/gabstv/ebiten/internal/driver"
+	"github.com/gabstv/ebiten/internal/graphicsdriver/opengl"
+	"github.com/gabstv/ebiten/internal/hooks"
+	"github.com/gabstv/ebiten/internal/thread"
 )
 
 var (

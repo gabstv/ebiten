@@ -20,7 +20,7 @@ import (
 	"math"
 	"testing"
 
-	. "github.com/hajimehoshi/ebiten/audio/internal/convert"
+	. "github.com/gabstv/ebiten/audio/internal/convert"
 )
 
 type f32reader struct {

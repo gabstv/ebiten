@@ -44,7 +44,7 @@ import "C"
 import (
 	"unsafe"
 
-	"github.com/hajimehoshi/ebiten/internal/glfw"
+	"github.com/gabstv/ebiten/internal/glfw"
 )
 
 func (u *UserInterface) glfwScale() float64 {

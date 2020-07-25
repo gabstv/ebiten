@@ -21,9 +21,9 @@ import (
 	"log"
 	"math"
 
-	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/audio"
-	"github.com/hajimehoshi/ebiten/ebitenutil"
+	"github.com/gabstv/ebiten"
+	"github.com/gabstv/ebiten/audio"
+	"github.com/gabstv/ebiten/ebitenutil"
 )
 
 const (

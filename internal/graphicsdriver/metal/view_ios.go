@@ -36,7 +36,7 @@ import "C"
 import (
 	"unsafe"
 
-	"github.com/hajimehoshi/ebiten/internal/graphicsdriver/metal/mtl"
+	"github.com/gabstv/ebiten/internal/graphicsdriver/metal/mtl"
 )
 
 func (v *view) setWindow(window unsafe.Pointer) {

@@ -19,8 +19,8 @@ import (
 	"hash/crc32"
 	"unicode"
 
-	"github.com/hajimehoshi/ebiten/internal/driver"
-	"github.com/hajimehoshi/ebiten/internal/uidriver/mobile"
+	"github.com/gabstv/ebiten/internal/driver"
+	"github.com/gabstv/ebiten/internal/uidriver/mobile"
 )
 
 // https://developer.android.com/reference/android/view/KeyEvent

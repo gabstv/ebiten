@@ -22,8 +22,8 @@
 package glfw
 
 import (
-	"github.com/hajimehoshi/ebiten/internal/driver"
-	"github.com/hajimehoshi/ebiten/internal/glfw"
+	"github.com/gabstv/ebiten/internal/driver"
+	"github.com/gabstv/ebiten/internal/glfw"
 )
 
 var glfwKeyToDriverKey = map[glfw.Key]driver.Key{

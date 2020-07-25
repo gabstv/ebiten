@@ -17,8 +17,8 @@ package opengl
 import (
 	"fmt"
 
-	"github.com/hajimehoshi/ebiten/internal/driver"
-	"github.com/hajimehoshi/ebiten/internal/shaderir"
+	"github.com/gabstv/ebiten/internal/driver"
+	"github.com/gabstv/ebiten/internal/shaderir"
 )
 
 type Shader struct {

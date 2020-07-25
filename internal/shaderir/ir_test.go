@@ -18,7 +18,7 @@ import (
 	"go/constant"
 	"testing"
 
-	. "github.com/hajimehoshi/ebiten/internal/shaderir"
+	. "github.com/gabstv/ebiten/internal/shaderir"
 )
 
 func block(localVars []Type, stmts ...Stmt) Block {

@@ -17,8 +17,8 @@
 package mobile
 
 import (
-	"github.com/hajimehoshi/ebiten/internal/driver"
-	"github.com/hajimehoshi/ebiten/internal/graphicsdriver/opengl"
+	"github.com/gabstv/ebiten/internal/driver"
+	"github.com/gabstv/ebiten/internal/graphicsdriver/opengl"
 )
 
 func (*UserInterface) Graphics() driver.Graphics {

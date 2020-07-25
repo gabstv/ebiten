@@ -18,7 +18,7 @@ import (
 	"image"
 	"net/http"
 
-	"github.com/hajimehoshi/ebiten"
+	"github.com/gabstv/ebiten"
 )
 
 // NewImageFromURL creates a new ebiten.Image from the given URL.

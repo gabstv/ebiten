@@ -23,7 +23,7 @@ import (
 	"io"
 	"sync"
 
-	"github.com/hajimehoshi/ebiten"
+	"github.com/gabstv/ebiten"
 )
 
 type recorder struct {

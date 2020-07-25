@@ -23,7 +23,7 @@ import (
 	"strings"
 	"testing"
 
-	. "github.com/hajimehoshi/ebiten/internal/shader"
+	. "github.com/gabstv/ebiten/internal/shader"
 )
 
 func TestCompile(t *testing.T) {

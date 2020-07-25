@@ -1,15 +1,15 @@
 # Ebiten
 
-[![PkgGoDev](https://pkg.go.dev/badge/github.com/hajimehoshi/ebiten)](https://pkg.go.dev/github.com/hajimehoshi/ebiten)
-[![Build Status](https://travis-ci.org/hajimehoshi/ebiten.svg?branch=master)](https://travis-ci.org/hajimehoshi/ebiten)
-[![Go Report Card](https://goreportcard.com/badge/github.com/hajimehoshi/ebiten)](https://goreportcard.com/report/github.com/hajimehoshi/ebiten)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/gabstv/ebiten)](https://pkg.go.dev/github.com/gabstv/ebiten)
+[![Build Status](https://travis-ci.org/gabstv/ebiten.svg?branch=master)](https://travis-ci.org/gabstv/ebiten)
+[![Go Report Card](https://goreportcard.com/badge/github.com/gabstv/ebiten)](https://goreportcard.com/report/github.com/gabstv/ebiten)
 
 **A dead simple 2D game library for Go**
 
 Ebiten is an open source game library for the Go programming language. Ebiten's simple API allows you to quickly and easily develop 2D games that can be deployed across multiple platforms.
 
 * [Website (ebiten.org)](https://ebiten.org)
-* [API Reference](https://pkg.go.dev/github.com/hajimehoshi/ebiten)
+* [API Reference](https://pkg.go.dev/github.com/gabstv/ebiten)
 * [Cheat Sheet](https://ebiten.org/documents/cheatsheet.html)
 
 ![Overview](https://ebiten.org/images/overview1.11.png)
@@ -38,15 +38,15 @@ For installation on desktops, see [the installation instruction](https://ebiten.
 
 ## Packages
 
-* [ebiten](https://pkg.go.dev/github.com/hajimehoshi/ebiten)
-  * [audio](https://pkg.go.dev/github.com/hajimehoshi/ebiten/audio)
-    * [mp3](https://pkg.go.dev/github.com/hajimehoshi/ebiten/audio/mp3)
-    * [vorbis](https://pkg.go.dev/github.com/hajimehoshi/ebiten/audio/vorbis)
-    * [wav](https://pkg.go.dev/github.com/hajimehoshi/ebiten/audio/wav)
-  * [ebitenutil](https://pkg.go.dev/github.com/hajimehoshi/ebiten/ebitenutil)
-  * [inpututil](https://pkg.go.dev/github.com/hajimehoshi/ebiten/inpututil)
-  * [mobile](https://pkg.go.dev/github.com/hajimehoshi/ebiten/mobile)
-  * [text](https://pkg.go.dev/github.com/hajimehoshi/ebiten/text)
+* [ebiten](https://pkg.go.dev/github.com/gabstv/ebiten)
+  * [audio](https://pkg.go.dev/github.com/gabstv/ebiten/audio)
+    * [mp3](https://pkg.go.dev/github.com/gabstv/ebiten/audio/mp3)
+    * [vorbis](https://pkg.go.dev/github.com/gabstv/ebiten/audio/vorbis)
+    * [wav](https://pkg.go.dev/github.com/gabstv/ebiten/audio/wav)
+  * [ebitenutil](https://pkg.go.dev/github.com/gabstv/ebiten/ebitenutil)
+  * [inpututil](https://pkg.go.dev/github.com/gabstv/ebiten/inpututil)
+  * [mobile](https://pkg.go.dev/github.com/gabstv/ebiten/mobile)
+  * [text](https://pkg.go.dev/github.com/gabstv/ebiten/text)
 
 ## Community
 

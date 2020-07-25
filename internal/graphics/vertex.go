@@ -15,7 +15,7 @@
 package graphics
 
 import (
-	"github.com/hajimehoshi/ebiten/internal/web"
+	"github.com/gabstv/ebiten/internal/web"
 )
 
 const (

@@ -30,16 +30,16 @@ import (
 	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/font"
 
-	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/audio"
-	"github.com/hajimehoshi/ebiten/audio/vorbis"
-	"github.com/hajimehoshi/ebiten/audio/wav"
-	"github.com/hajimehoshi/ebiten/ebitenutil"
-	raudio "github.com/hajimehoshi/ebiten/examples/resources/audio"
-	"github.com/hajimehoshi/ebiten/examples/resources/fonts"
-	resources "github.com/hajimehoshi/ebiten/examples/resources/images/flappy"
-	"github.com/hajimehoshi/ebiten/inpututil"
-	"github.com/hajimehoshi/ebiten/text"
+	"github.com/gabstv/ebiten"
+	"github.com/gabstv/ebiten/audio"
+	"github.com/gabstv/ebiten/audio/vorbis"
+	"github.com/gabstv/ebiten/audio/wav"
+	"github.com/gabstv/ebiten/ebitenutil"
+	raudio "github.com/gabstv/ebiten/examples/resources/audio"
+	"github.com/gabstv/ebiten/examples/resources/fonts"
+	resources "github.com/gabstv/ebiten/examples/resources/images/flappy"
+	"github.com/gabstv/ebiten/inpututil"
+	"github.com/gabstv/ebiten/text"
 )
 
 func init() {

@@ -19,11 +19,11 @@ import (
 	"math"
 	"strings"
 
-	"github.com/hajimehoshi/ebiten/internal/affine"
-	"github.com/hajimehoshi/ebiten/internal/driver"
-	"github.com/hajimehoshi/ebiten/internal/graphics"
-	"github.com/hajimehoshi/ebiten/internal/shaderir"
-	"github.com/hajimehoshi/ebiten/internal/web"
+	"github.com/gabstv/ebiten/internal/affine"
+	"github.com/gabstv/ebiten/internal/driver"
+	"github.com/gabstv/ebiten/internal/graphics"
+	"github.com/gabstv/ebiten/internal/shaderir"
+	"github.com/gabstv/ebiten/internal/web"
 )
 
 var theGraphicsDriver driver.Graphics

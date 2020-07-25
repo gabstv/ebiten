@@ -17,7 +17,7 @@
 package mobile
 
 import (
-	"github.com/hajimehoshi/ebiten/internal/driver"
+	"github.com/gabstv/ebiten/internal/driver"
 )
 
 type pos struct {

@@ -20,8 +20,8 @@ package metal
 import (
 	"unsafe"
 
-	"github.com/hajimehoshi/ebiten/internal/graphicsdriver/metal/mtl"
-	"github.com/hajimehoshi/ebiten/internal/graphicsdriver/metal/ns"
+	"github.com/gabstv/ebiten/internal/graphicsdriver/metal/mtl"
+	"github.com/gabstv/ebiten/internal/graphicsdriver/metal/ns"
 )
 
 func (v *view) setWindow(window unsafe.Pointer) {

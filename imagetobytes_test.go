@@ -21,7 +21,7 @@ import (
 	"image/color/palette"
 	"testing"
 
-	. "github.com/hajimehoshi/ebiten"
+	. "github.com/gabstv/ebiten"
 )
 
 func TestImageToBytes(t *testing.T) {

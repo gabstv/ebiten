@@ -22,7 +22,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/hajimehoshi/ebiten/internal/shaderir"
+	"github.com/gabstv/ebiten/internal/shaderir"
 )
 
 var textureVariableRe = regexp.MustCompile(`\A__t(\d+)\z`)

@@ -20,9 +20,9 @@ import (
 
 	"github.com/hajimehoshi/bitmapfont"
 
-	"github.com/hajimehoshi/ebiten"
-	t "github.com/hajimehoshi/ebiten/internal/testing"
-	. "github.com/hajimehoshi/ebiten/text"
+	"github.com/gabstv/ebiten"
+	t "github.com/gabstv/ebiten/internal/testing"
+	. "github.com/gabstv/ebiten/text"
 )
 
 func TestMain(m *testing.M) {

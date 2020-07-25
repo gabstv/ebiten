@@ -19,7 +19,7 @@ import (
 	"reflect"
 	"testing"
 
-	. "github.com/hajimehoshi/ebiten/vector/internal/triangulate"
+	. "github.com/gabstv/ebiten/vector/internal/triangulate"
 )
 
 func TestIsInTriangle(t *testing.T) {

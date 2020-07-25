@@ -20,10 +20,10 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/hajimehoshi/ebiten/internal/buffered"
-	"github.com/hajimehoshi/ebiten/internal/clock"
-	"github.com/hajimehoshi/ebiten/internal/driver"
-	"github.com/hajimehoshi/ebiten/internal/hooks"
+	"github.com/gabstv/ebiten/internal/buffered"
+	"github.com/gabstv/ebiten/internal/clock"
+	"github.com/gabstv/ebiten/internal/driver"
+	"github.com/gabstv/ebiten/internal/hooks"
 )
 
 type defaultGame struct {

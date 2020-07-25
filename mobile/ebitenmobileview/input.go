@@ -17,8 +17,8 @@
 package ebitenmobileview
 
 import (
-	"github.com/hajimehoshi/ebiten/internal/driver"
-	"github.com/hajimehoshi/ebiten/internal/uidriver/mobile"
+	"github.com/gabstv/ebiten/internal/driver"
+	"github.com/gabstv/ebiten/internal/uidriver/mobile"
 )
 
 type position struct {

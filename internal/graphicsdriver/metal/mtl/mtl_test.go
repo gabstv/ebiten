@@ -28,7 +28,7 @@ import (
 
 	"golang.org/x/image/math/f32"
 
-	"github.com/hajimehoshi/ebiten/internal/graphicsdriver/metal/mtl"
+	"github.com/gabstv/ebiten/internal/graphicsdriver/metal/mtl"
 )
 
 func Disabled_TestRenderTriangle(t *testing.T) {

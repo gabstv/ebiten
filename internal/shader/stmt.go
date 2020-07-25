@@ -21,7 +21,7 @@ import (
 	"go/token"
 	"strings"
 
-	"github.com/hajimehoshi/ebiten/internal/shaderir"
+	"github.com/gabstv/ebiten/internal/shaderir"
 )
 
 func (cs *compileState) parseStmt(block *block, stmt ast.Stmt, inParams []variable) ([]shaderir.Stmt, bool) {
