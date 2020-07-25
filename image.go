@@ -737,6 +737,16 @@ func NewImage(width, height int, filter Filter) (*Image, error) {
 	return newImage(width, height, filter, false), nil
 }
 
+// NewScreenBufferImage returns an empty image optimized to be used as an offscreen buffer.
+//
+// If width or height is less than 1 or more than device-dependent maximum size, NewScreenBufferImage panics.
+//
+// filter argument is just for backward compatibility.
+// If you are not sure, specify FilterDefault.
+func NewScreenBufferImage(width, height int, filter Filter) *Image {
+	return newImage(width, height, filter, true)
+}
+
 func newImage(width, height int, filter Filter, volatile bool) *Image {
 	i := &Image{
 		buffered: buffered.NewImage(width, height, volatile),
