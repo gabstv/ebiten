@@ -738,6 +738,7 @@ func NewImage(width, height int, filter Filter) (*Image, error) {
 }
 
 // NewScreenBufferImage returns an empty image optimized to be used as an offscreen buffer.
+// Mipmaps are disabled and the image is cleared on the beginning of every frame.
 //
 // If width or height is less than 1 or more than device-dependent maximum size, NewScreenBufferImage panics.
 //
