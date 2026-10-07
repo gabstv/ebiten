@@ -832,8 +832,11 @@ func (cb CommandBuffer) Status() CommandBufferStatus {
 // PresentDrawable registers a drawable presentation to occur as soon as possible.
 //
 // Reference: https://developer.apple.com/documentation/metal/mtlcommandbuffer/1443029-presentdrawable?language=objc.
-func (cb CommandBuffer) PresentDrawable(d Drawable) {
-	cocoa.ObjcSend1(cb.commandBuffer, sel_presentDrawable, uintptr(d.Drawable()))
+//
+// PresentDrawable takes the id<MTLDrawable> pointer rather than a Drawable, so that the caller does not
+// box its drawable into an interface on every present.
+func (cb CommandBuffer) PresentDrawable(drawable unsafe.Pointer) {
+	cocoa.ObjcSend1(cb.commandBuffer, sel_presentDrawable, uintptr(drawable))
 }
 
 // Commit commits this command buffer for execution as soon as possible.
@@ -931,25 +934,25 @@ func (rce RenderCommandEncoder) SetRenderPipelineState(rps RenderPipelineState) 
 	cocoa.ObjcSend1(rce.commandEncoder, sel_setRenderPipelineState, uintptr(rps.renderPipelineState))
 }
 
-func (rce RenderCommandEncoder) SetViewport(viewport Viewport) {
+func (rce RenderCommandEncoder) SetViewport(viewport *Viewport) {
 	// Structs over 16 bytes are passed by pointer on arm64 but copied onto the stack on amd64.
 	if runtime.GOARCH != "arm64" {
-		rce.commandEncoder.Send(sel_setViewport, viewport)
+		rce.commandEncoder.Send(sel_setViewport, *viewport)
 		return
 	}
-	cocoa.ObjcSend1(rce.commandEncoder, sel_setViewport, uintptr(unsafe.Pointer(&viewport)))
+	cocoa.ObjcSend1(rce.commandEncoder, sel_setViewport, uintptr(unsafe.Pointer(viewport)))
 }
 
 // SetScissorRect sets the scissor rectangle for a fragment scissor test.
 //
 // Reference: https://developer.apple.com/documentation/metal/mtlrendercommandencoder/1515583-setscissorrect?language=objc.
-func (rce RenderCommandEncoder) SetScissorRect(scissorRect ScissorRect) {
+func (rce RenderCommandEncoder) SetScissorRect(scissorRect *ScissorRect) {
 	// Structs over 16 bytes are passed by pointer on arm64 but copied onto the stack on amd64.
 	if runtime.GOARCH != "arm64" {
-		rce.commandEncoder.Send(sel_setScissorRect, scissorRect)
+		rce.commandEncoder.Send(sel_setScissorRect, *scissorRect)
 		return
 	}
-	cocoa.ObjcSend1(rce.commandEncoder, sel_setScissorRect, uintptr(unsafe.Pointer(&scissorRect)))
+	cocoa.ObjcSend1(rce.commandEncoder, sel_setScissorRect, uintptr(unsafe.Pointer(scissorRect)))
 }
 
 // SetVertexBuffer sets a buffer for the vertex shader function at an index
@@ -1172,14 +1175,18 @@ type ResidencySet struct {
 // AddAllocation stages a single resource to join the residency set’s list of allocations.
 //
 // Reference: https://developer.apple.com/documentation/metal/mtlresidencyset/addallocation(_:)?language=objc.
-func (r ResidencySet) AddAllocation(resource Resource) {
+//
+// AddAllocation is generic so that passing a Buffer or a Texture does not box it into an interface.
+func AddAllocation[T Resource](r ResidencySet, resource T) {
 	cocoa.ObjcSend1(r.residencySet, sel_addAllocation, uintptr(resource.resource()))
 }
 
 // RemoveAllocation stages a single resource to leave the residency set’s list of allocations.
 //
 // Reference: https://developer.apple.com/documentation/metal/mtlresidencyset/removeallocation(_:)?language=objc.
-func (r ResidencySet) RemoveAllocation(resource Resource) {
+//
+// RemoveAllocation is generic so that passing a Buffer or a Texture does not box it into an interface.
+func RemoveAllocation[T Resource](r ResidencySet, resource T) {
 	cocoa.ObjcSend1(r.residencySet, sel_removeAllocation, uintptr(resource.resource()))
 }
 

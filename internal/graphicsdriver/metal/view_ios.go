@@ -121,7 +121,7 @@ func (v *view) presentDrawableWithTransaction(cb mtl.CommandBuffer, d ca.MetalDr
 }
 
 func (v *view) presentDrawable(cb mtl.CommandBuffer, d ca.MetalDrawable) {
-	cb.PresentDrawable(d)
+	cb.PresentDrawable(d.Drawable())
 }
 
 func (v *view) updateMetalDisplayLink() {

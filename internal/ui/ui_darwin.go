@@ -427,22 +427,20 @@ func monitorFromWindowByOS(w *glfw.Window) (*Monitor, error) {
 		screen = window.Screen()
 	}
 	screenDictionary := screen.DeviceDescription()
-	screenNumberKey := cocoa.NSString_alloc().InitWithUTF8String("NSScreenNumber")
-	screenID := cocoa.NSNumber{ID: screenDictionary.ObjectForKey(screenNumberKey.ID)}
-	screenNumberKey.ID.Send(sel_release)
+	screenID := cocoa.NSNumber{ID: screenDictionary.ObjectForKey(nsStringScreenNumber.ID)}
 	aID := uintptr(screenID.UnsignedIntValue()) // CGDirectDisplayID
 	pool.Release()
-	for _, m := range theMonitors.append(nil) {
+	return theMonitors.find(func(m *Monitor) (bool, error) {
 		cocoaMonitor, err := m.m.GetCocoaMonitor()
 		if err != nil {
-			return nil, err
+			return false, err
 		}
-		if cocoaMonitor == aID {
-			return m, nil
-		}
-	}
-	return nil, nil
+		return cocoaMonitor == aID, nil
+	})
 }
+
+// nsStringScreenNumber is the NSScreenNumber device description key, created once.
+var nsStringScreenNumber = cocoa.NSString_alloc().InitWithUTF8String("NSScreenNumber")
 
 func (u *glfwBackend) nativeWindow() (uintptr, error) {
 	return u.window.GetCocoaWindow()
