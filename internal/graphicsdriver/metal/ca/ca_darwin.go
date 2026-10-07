@@ -283,7 +283,7 @@ func (md MetalDrawable) AddPresentedHandler(block objc.Block) {
 
 // CanAddPresentedHandler reports whether AddPresentedHandler is available.
 func (md MetalDrawable) CanAddPresentedHandler() bool {
-	return cocoa.ObjcSend1(md.metalDrawable, sel_respondsToSelector, uintptr(sel_addPresentedHandler)) != 0
+	return cocoa.ObjcSendBool1(md.metalDrawable, sel_respondsToSelector, uintptr(sel_addPresentedHandler))
 }
 
 // MetalDisplayLink is a class your Metal app uses to register for callbacks to synchronize its animations for a display.

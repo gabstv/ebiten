@@ -146,7 +146,7 @@ func (w NSWindow) SetStyleMask(styleMask NSUInteger) {
 }
 
 func (w NSWindow) IsVisible() bool {
-	return ObjcSend0(w.ID, sel_isVisible) != 0
+	return ObjcSendBool(w.ID, sel_isVisible)
 }
 
 func (w NSWindow) OcclusionState() NSUInteger {
@@ -154,7 +154,7 @@ func (w NSWindow) OcclusionState() NSUInteger {
 }
 
 func (w NSWindow) InLiveResize() bool {
-	return ObjcSend0(w.ID, sel_inLiveResize) != 0
+	return ObjcSendBool(w.ID, sel_inLiveResize)
 }
 
 func (w NSWindow) Screen() NSScreen {
@@ -252,7 +252,8 @@ type NSNumber struct {
 }
 
 func (n NSNumber) UnsignedIntValue() uint {
-	return uint(ObjcSend0(n.ID, sel_unsignedIntValue))
+	// unsignedIntValue returns a 32-bit unsigned int; the upper half of the register is undefined.
+	return uint(uint32(ObjcSend0(n.ID, sel_unsignedIntValue)))
 }
 
 type NSRunLoop struct {

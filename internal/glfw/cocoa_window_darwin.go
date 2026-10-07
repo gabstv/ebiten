@@ -225,7 +225,7 @@ func registerGLFWClasses() error {
 						_ = window.centerCursorInContentArea()
 					}
 
-					maximized := cocoa.ObjcSend0(window.platform.object, sel_isZoomed) != 0
+					maximized := cocoa.ObjcSendBool(window.platform.object, sel_isZoomed)
 					if window.platform.maximized != maximized {
 						window.platform.maximized = maximized
 						window.inputWindowMaximize(maximized)
@@ -582,7 +582,7 @@ func registerGLFWClasses() error {
 					// by a line height.
 					scrollDeltaX, scrollDeltaY := deltaX, deltaY
 					unit := ScrollUnitLine
-					if cocoa.ObjcSend0(event, sel_hasPreciseScrollingDeltas) != 0 {
+					if cocoa.ObjcSendBool(event, sel_hasPreciseScrollingDeltas) {
 						unit = ScrollUnitPixel
 						deltaX *= 0.1
 						deltaY *= 0.1
@@ -683,7 +683,7 @@ func registerGLFWClasses() error {
 					if window == nil {
 						return false
 					}
-					return cocoa.ObjcSend0(window.platform.object, objc.RegisterName("isOpaque")) != 0
+					return cocoa.ObjcSendBool(window.platform.object, objc.RegisterName("isOpaque"))
 				},
 			},
 			{
@@ -772,7 +772,7 @@ func registerGLFWClasses() error {
 					if window.platform.markedText != 0 {
 						cocoa.ObjcSend0(window.platform.markedText, sel_release)
 					}
-					if cocoa.ObjcSend1(str, sel_isKindOfClass, uintptr(class_NSAttributedString)) != 0 {
+					if cocoa.ObjcSendBool1(str, sel_isKindOfClass, uintptr(class_NSAttributedString)) {
 						alloc := objc.ID(cocoa.ObjcSend0(objc.ID(class_NSMutableAttributedString), sel_alloc))
 						window.platform.markedText = objc.ID(cocoa.ObjcSend1(alloc, sel_initWithAttributedString, uintptr(str)))
 					} else {
@@ -825,7 +825,7 @@ func registerGLFWClasses() error {
 					// Get the string from the text object.
 					// The text parameter can be either NSString or NSAttributedString.
 					characters := text
-					if cocoa.ObjcSend1(text, sel_isKindOfClass, uintptr(class_NSAttributedString)) != 0 {
+					if cocoa.ObjcSendBool1(text, sel_isKindOfClass, uintptr(class_NSAttributedString)) {
 						characters = objc.ID(cocoa.ObjcSend0(text, sel_string))
 					}
 					str := cocoa.NSString{ID: characters}
@@ -1128,7 +1128,7 @@ func createNativeWindow(window *Window, wndconfig *wndconfig, fbconfig_ *fbconfi
 
 	// Disable window tabbing (macOS 10.12+).
 	sel_setTabbingMode := objc.RegisterName("setTabbingMode:")
-	if cocoa.ObjcSend1(nsWindow, objc.RegisterName("respondsToSelector:"), uintptr(sel_setTabbingMode)) != 0 {
+	if cocoa.ObjcSendBool1(nsWindow, objc.RegisterName("respondsToSelector:"), uintptr(sel_setTabbingMode)) {
 		cocoa.ObjcSend1(nsWindow, sel_setTabbingMode, uintptr(2)) // NSWindowTabbingModeDisallowed = 2
 	}
 
@@ -1411,9 +1411,9 @@ func (w *Window) platformRestoreWindow() {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	if cocoa.ObjcSend0(w.platform.object, objc.RegisterName("isMiniaturized")) != 0 {
+	if cocoa.ObjcSendBool(w.platform.object, objc.RegisterName("isMiniaturized")) {
 		cocoa.ObjcSend1(w.platform.object, sel_deminiaturize, 0)
-	} else if cocoa.ObjcSend0(w.platform.object, sel_isZoomed) != 0 {
+	} else if cocoa.ObjcSendBool(w.platform.object, sel_isZoomed) {
 		cocoa.ObjcSend1(w.platform.object, sel_zoom, 0)
 	}
 }
@@ -1422,7 +1422,7 @@ func (w *Window) platformMaximizeWindow() error {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	if cocoa.ObjcSend0(w.platform.object, sel_isZoomed) == 0 {
+	if !cocoa.ObjcSendBool(w.platform.object, sel_isZoomed) {
 		cocoa.ObjcSend1(w.platform.object, sel_zoom, 0)
 	}
 	return nil
@@ -1587,21 +1587,21 @@ func (w *Window) platformWindowFocused() bool {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	return cocoa.ObjcSend0(w.platform.object, sel_isKeyWindow) != 0
+	return cocoa.ObjcSendBool(w.platform.object, sel_isKeyWindow)
 }
 
 func (w *Window) platformWindowIconified() bool {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	return cocoa.ObjcSend0(w.platform.object, sel_isMiniaturized) != 0
+	return cocoa.ObjcSendBool(w.platform.object, sel_isMiniaturized)
 }
 
 func (w *Window) platformWindowVisible() bool {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	return cocoa.ObjcSend0(w.platform.object, sel_isVisible) != 0
+	return cocoa.ObjcSendBool(w.platform.object, sel_isVisible)
 }
 
 func (w *Window) platformWindowMaximized() bool {
@@ -1609,7 +1609,7 @@ func (w *Window) platformWindowMaximized() bool {
 	defer pool.Release()
 
 	if w.resizable {
-		return cocoa.ObjcSend0(w.platform.object, sel_isZoomed) != 0
+		return cocoa.ObjcSendBool(w.platform.object, sel_isZoomed)
 	}
 	return false
 }
@@ -1640,8 +1640,8 @@ func (w *Window) platformFramebufferTransparent() bool {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	return cocoa.ObjcSend0(w.platform.object, objc.RegisterName("isOpaque")) == 0 &&
-		cocoa.ObjcSend0(w.platform.view, objc.RegisterName("isOpaque")) == 0
+	return !cocoa.ObjcSendBool(w.platform.object, objc.RegisterName("isOpaque")) &&
+		!cocoa.ObjcSendBool(w.platform.view, objc.RegisterName("isOpaque"))
 }
 
 func (w *Window) platformSetWindowResizable(enabled bool) error {
@@ -1947,9 +1947,9 @@ func (c *Cursor) platformCreateStandardCursor(shape StandardCursor) error {
 	}
 
 	var cursor objc.ID
-	if cursorSelector != 0 && cocoa.ObjcSend1(objc.ID(class_NSCursor), sel_respondsToSelector, uintptr(cursorSelector)) != 0 {
+	if cursorSelector != 0 && cocoa.ObjcSendBool1(objc.ID(class_NSCursor), sel_respondsToSelector, uintptr(cursorSelector)) {
 		id := objc.ID(cocoa.ObjcSend1(objc.ID(class_NSCursor), sel_performSelector, uintptr(cursorSelector)))
-		if id != 0 && cocoa.ObjcSend1(id, sel_isKindOfClass, uintptr(class_NSCursor)) != 0 {
+		if id != 0 && cocoa.ObjcSendBool1(id, sel_isKindOfClass, uintptr(class_NSCursor)) {
 			cursor = id
 		}
 	}
@@ -2055,7 +2055,7 @@ func platformGetClipboardString() (string, error) {
 	pasteboard := objc.ID(cocoa.ObjcSend0(objc.ID(class_NSPasteboard), sel_generalPasteboard))
 
 	types := objc.ID(cocoa.ObjcSend0(pasteboard, sel_types))
-	if cocoa.ObjcSend1(types, sel_containsObject, uintptr(nsPasteboardTypeString.ID)) == 0 {
+	if !cocoa.ObjcSendBool1(types, sel_containsObject, uintptr(nsPasteboardTypeString.ID)) {
 		return "", fmt.Errorf("glfw: failed to retrieve string from pasteboard: %w", FormatUnavailable)
 	}
 

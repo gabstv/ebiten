@@ -177,7 +177,7 @@ func getMonitorNameNS(displayID uint32) string {
 		// HACK: Compare unit numbers instead of display IDs to work around
 		//       display replacement on machines with automatic graphics switching
 		if cgDisplayUnitNumber(sid) == cgDisplayUnitNumber(displayID) {
-			if cocoa.ObjcSend1(screen, objc.RegisterName("respondsToSelector:"), uintptr(sel_localizedName)) != 0 {
+			if cocoa.ObjcSendBool1(screen, objc.RegisterName("respondsToSelector:"), uintptr(sel_localizedName)) {
 				if name := cstrings.NSStringToString(objc.ID(cocoa.ObjcSend0(screen, sel_localizedName))); name != "" {
 					return name
 				}

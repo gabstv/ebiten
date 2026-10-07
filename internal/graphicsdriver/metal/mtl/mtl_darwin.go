@@ -25,6 +25,7 @@ package mtl
 import (
 	"errors"
 	"fmt"
+	"math"
 	"runtime"
 	"structs"
 	"unsafe"
@@ -558,8 +559,8 @@ func CreateSystemDefaultDevice() (Device, error) {
 		name     string
 	)
 	if runtime.GOOS != "ios" {
-		headless = int(cocoa.ObjcSend0(objc.ID(d), sel_isHeadless)) != 0
-		lowPower = int(cocoa.ObjcSend0(objc.ID(d), sel_isLowPower)) != 0
+		headless = cocoa.ObjcSendBool(objc.ID(d), sel_isHeadless)
+		lowPower = cocoa.ObjcSendBool(objc.ID(d), sel_isLowPower)
 	}
 	name = cocoa.NSString{ID: objc.ID(cocoa.ObjcSend0(objc.ID(d), sel_name))}.String()
 
@@ -578,21 +579,21 @@ func (d Device) Device() unsafe.Pointer { return *(*unsafe.Pointer)(unsafe.Point
 //
 // Reference: https://developer.apple.com/documentation/objectivec/1418956-nsobject/1418583-respondstoselector?language=objc.
 func (d Device) RespondsToSelector(sel objc.SEL) bool {
-	return cocoa.ObjcSend1(d.device, sel_respondsToSelector, uintptr(sel)) != 0
+	return cocoa.ObjcSendBool1(d.device, sel_respondsToSelector, uintptr(sel))
 }
 
 // SupportsFamily returns a Boolean value that indicates whether the GPU device supports the feature set of a specific GPU family.
 //
 // Reference: https://developer.apple.com/documentation/metal/mtldevice/3143473-supportsfamily?language=objc.
 func (d Device) SupportsFamily(gpuFamily GPUFamily) bool {
-	return cocoa.ObjcSend1(d.device, sel_supportsFamily, uintptr(gpuFamily)) != 0
+	return cocoa.ObjcSendBool1(d.device, sel_supportsFamily, uintptr(gpuFamily))
 }
 
 // SupportsFeatureSet reports whether device d supports feature set fs.
 //
 // Reference: https://developer.apple.com/documentation/metal/mtldevice/1433418-supportsfeatureset?language=objc.
 func (d Device) SupportsFeatureSet(fs FeatureSet) bool {
-	return cocoa.ObjcSend1(d.device, sel_supportsFeatureSet, uintptr(fs)) != 0
+	return cocoa.ObjcSendBool1(d.device, sel_supportsFeatureSet, uintptr(fs))
 }
 
 // NewCommandQueue creates a queue you use to submit rendering and computation commands to a GPU.
@@ -871,12 +872,15 @@ func (cb CommandBuffer) RenderCommandEncoderWithDescriptor(rpd RenderPassDescrip
 	cocoa.ObjcSend1(colorAttachments0, sel_setLoadAction, uintptr(rpd.ColorAttachments[0].LoadAction))
 	cocoa.ObjcSend1(colorAttachments0, sel_setStoreAction, uintptr(rpd.ColorAttachments[0].StoreAction))
 	cocoa.ObjcSend1(colorAttachments0, sel_setTexture, uintptr(rpd.ColorAttachments[0].Texture.texture))
-	if runtime.GOARCH == "arm64" {
-		// MTLClearColor is an HFA of 4 doubles, passed in d0-d3 on arm64.
-		c := rpd.ColorAttachments[0].ClearColor
-		cocoa.ObjcSendFloat4(colorAttachments0, sel_setClearColor, c.Red, c.Green, c.Blue, c.Alpha)
+	// MTLClearColor (four float64s) is an HFA passed in d0-d3 on arm64, and passed in memory,
+	// on the stack, on amd64.
+	c := rpd.ColorAttachments[0].ClearColor
+	if runtime.GOARCH == "amd64" {
+		cocoa.ObjcSendStack(colorAttachments0, sel_setClearColor,
+			uintptr(math.Float64bits(c.Red)), uintptr(math.Float64bits(c.Green)),
+			uintptr(math.Float64bits(c.Blue)), uintptr(math.Float64bits(c.Alpha)))
 	} else {
-		colorAttachments0.Send(sel_setClearColor, rpd.ColorAttachments[0].ClearColor)
+		cocoa.ObjcSendFloat4(colorAttachments0, sel_setClearColor, c.Red, c.Green, c.Blue, c.Alpha)
 	}
 	var stencilAttachment = objc.ID(cocoa.ObjcSend0(renderPassDescriptor, sel_stencilAttachment))
 	cocoa.ObjcSend1(stencilAttachment, sel_setLoadAction, uintptr(rpd.StencilAttachment.LoadAction))
@@ -935,9 +939,13 @@ func (rce RenderCommandEncoder) SetRenderPipelineState(rps RenderPipelineState) 
 }
 
 func (rce RenderCommandEncoder) SetViewport(viewport *Viewport) {
-	// Structs over 16 bytes are passed by pointer on arm64 but copied onto the stack on amd64.
-	if runtime.GOARCH != "arm64" {
-		rce.commandEncoder.Send(sel_setViewport, *viewport)
+	// MTLViewport (six float64s) is passed by pointer on arm64 and in memory, on the stack, on amd64.
+	if runtime.GOARCH == "amd64" {
+		v := viewport
+		cocoa.ObjcSendStack(rce.commandEncoder, sel_setViewport,
+			uintptr(math.Float64bits(v.OriginX)), uintptr(math.Float64bits(v.OriginY)),
+			uintptr(math.Float64bits(v.Width)), uintptr(math.Float64bits(v.Height)),
+			uintptr(math.Float64bits(v.ZNear)), uintptr(math.Float64bits(v.ZFar)))
 		return
 	}
 	cocoa.ObjcSend1(rce.commandEncoder, sel_setViewport, uintptr(unsafe.Pointer(viewport)))
@@ -947,9 +955,10 @@ func (rce RenderCommandEncoder) SetViewport(viewport *Viewport) {
 //
 // Reference: https://developer.apple.com/documentation/metal/mtlrendercommandencoder/1515583-setscissorrect?language=objc.
 func (rce RenderCommandEncoder) SetScissorRect(scissorRect *ScissorRect) {
-	// Structs over 16 bytes are passed by pointer on arm64 but copied onto the stack on amd64.
-	if runtime.GOARCH != "arm64" {
-		rce.commandEncoder.Send(sel_setScissorRect, *scissorRect)
+	// MTLScissorRect (four NSUIntegers) is passed by pointer on arm64 and in memory, on the stack, on amd64.
+	if runtime.GOARCH == "amd64" {
+		r := scissorRect
+		cocoa.ObjcSendStack(rce.commandEncoder, sel_setScissorRect, uintptr(r.X), uintptr(r.Y), uintptr(r.Width), uintptr(r.Height))
 		return
 	}
 	cocoa.ObjcSend1(rce.commandEncoder, sel_setScissorRect, uintptr(unsafe.Pointer(scissorRect)))

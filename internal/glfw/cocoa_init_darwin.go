@@ -163,7 +163,7 @@ func getAppName() string {
 				nsKey := cocoa.NSString_alloc().InitWithUTF8String(key)
 				name := objc.ID(cocoa.ObjcSend1(info, sel_objectForKey, uintptr(nsKey.ID)))
 				cocoa.ObjcSend0(nsKey.ID, sel_release)
-				if name != 0 && cocoa.ObjcSend1(name, sel_isKindOfClass, uintptr(objc.GetClass("NSString"))) != 0 {
+				if name != 0 && cocoa.ObjcSendBool1(name, sel_isKindOfClass, uintptr(objc.GetClass("NSString"))) {
 					s := cocoa.NSString{ID: name}.String()
 					if len(s) > 0 {
 						return s
@@ -630,7 +630,7 @@ func platformInit() error {
 	// already finished launching. The delegate's applicationDidFinishLaunching:
 	// calls stop: and posts an empty event, so this returns quickly.
 	currentApp := objc.ID(cocoa.ObjcSend0(objc.ID(class_NSRunningApplication), sel_currentApplication))
-	if cocoa.ObjcSend0(currentApp, sel_isFinishedLaunching) == 0 {
+	if !cocoa.ObjcSendBool(currentApp, sel_isFinishedLaunching) {
 		cocoa.ObjcSend0(nsApp, sel_run)
 	}
 

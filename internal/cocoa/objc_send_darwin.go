@@ -36,6 +36,23 @@ var ObjcMsgSend = func() uintptr {
 	return fn
 }()
 
+// objcMsgSendStret is objc_msgSend_stret, which returns a struct in memory on amd64.
+// It does not exist on arm64, where such structs are returned through x8 instead.
+var objcMsgSendStret = func() uintptr {
+	if runtime.GOARCH != "amd64" {
+		return 0
+	}
+	lib, err := purego.Dlopen("/usr/lib/libobjc.A.dylib", purego.RTLD_GLOBAL)
+	if err != nil {
+		panic(err)
+	}
+	fn, err := purego.Dlsym(lib, "objc_msgSend_stret")
+	if err != nil {
+		panic(err)
+	}
+	return fn
+}()
+
 func ObjcSend0(id objc.ID, sel objc.SEL) uintptr {
 	r, _ := purego.SyscallN2(ObjcMsgSend, uintptr(id), uintptr(sel))
 	return r
@@ -71,189 +88,184 @@ func ObjcSend5(id objc.ID, sel objc.SEL, a0, a1, a2, a3, a4 uintptr) uintptr {
 	return r
 }
 
+// The helpers below call objc_msgSend with float and struct arguments through purego.SyscallNMixed.
+//
+// NSPoint and NSSize (two float64s) go in two float registers on both arm64 and amd64.
+// NSRect (four float64s, 32 bytes) differs: on arm64 it is an HFA passed and returned in four
+// float registers, while on amd64 it is passed in memory, in the first stack slots, and returned
+// through objc_msgSend_stret with a hidden result pointer as the first integer argument.
+
+// isAMD64 reports whether NSRect is passed in memory rather than in float registers.
+const isAMD64 = runtime.GOARCH == "amd64"
+
+// rectRecv is the index in the integer arguments of the receiver of a method that returns an
+// NSRect: on amd64 the hidden result pointer comes first.
+var rectRecv = boolInt(isAMD64)
+
+// stackSlot is the index in the integer arguments of the first stack slot on amd64.
+const stackSlot = 6
+
+func boolInt(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
+}
+
+type msgArgs struct {
+	ints   [16]uintptr
+	floats [8]uintptr
+}
+
+func (a *msgArgs) setFloat(i int, f float64) {
+	a.floats[i] = uintptr(math.Float64bits(f))
+}
+
+// setRect places an NSRect argument: in floats[i:i+4] on arm64, or in the first stack slots on amd64.
+func (a *msgArgs) setRect(i int, r NSRect) {
+	words := [4]uintptr{
+		uintptr(math.Float64bits(r.Origin.X)),
+		uintptr(math.Float64bits(r.Origin.Y)),
+		uintptr(math.Float64bits(r.Size.Width)),
+		uintptr(math.Float64bits(r.Size.Height)),
+	}
+	if isAMD64 {
+		copy(a.ints[stackSlot:], words[:])
+		return
+	}
+	copy(a.floats[i:], words[:])
+}
+
+func (a *msgArgs) send() (r1, f1, f2 uintptr) {
+	r1, f1, f2, _, _ = purego.SyscallNMixed(ObjcMsgSend, &a.ints, &a.floats)
+	return
+}
+
+// sendRect calls a method that returns an NSRect. The receiver must be at ints[rectRecv].
+func (a *msgArgs) sendRect() NSRect {
+	var w [4]uintptr
+	if isAMD64 {
+		w = purego.SyscallNMixedStret(objcMsgSendStret, &a.ints, &a.floats)
+	} else {
+		_, w[0], w[1], w[2], w[3] = purego.SyscallNMixed(ObjcMsgSend, &a.ints, &a.floats)
+	}
+	return NSRect{
+		Origin: NSPoint{X: math.Float64frombits(uint64(w[0])), Y: math.Float64frombits(uint64(w[1]))},
+		Size:   NSSize{Width: math.Float64frombits(uint64(w[2])), Height: math.Float64frombits(uint64(w[3]))},
+	}
+}
+
+func pointFromWords(f1, f2 uintptr) NSPoint {
+	return NSPoint{X: math.Float64frombits(uint64(f1)), Y: math.Float64frombits(uint64(f2))}
+}
+
+// ObjcSendBool calls a method that returns BOOL. Only the low byte of the result register is defined.
+func ObjcSendBool(id objc.ID, sel objc.SEL) bool {
+	return ObjcSend0(id, sel)&0xff != 0
+}
+
+// ObjcSendBool1 calls a method with one integer argument that returns BOOL.
+//
+//go:uintptrescapes
+func ObjcSendBool1(id objc.ID, sel objc.SEL, a0 uintptr) bool {
+	return ObjcSend1(id, sel, a0)&0xff != 0
+}
+
 func ObjcSendFloat64(id objc.ID, sel objc.SEL) float64 {
-	var intArgs, floatArgs [8]uintptr
-	intArgs[0] = uintptr(id)
-	intArgs[1] = uintptr(sel)
-	_, f1, _, _, _ := purego.SyscallNMixed(ObjcMsgSend, &intArgs, &floatArgs)
+	a := msgArgs{ints: [16]uintptr{uintptr(id), uintptr(sel)}}
+	_, f1, _ := a.send()
 	return math.Float64frombits(uint64(f1))
 }
 
 func ObjcSendNSPoint(id objc.ID, sel objc.SEL) NSPoint {
-	var intArgs, floatArgs [8]uintptr
-	intArgs[0] = uintptr(id)
-	intArgs[1] = uintptr(sel)
-	_, f1, f2, _, _ := purego.SyscallNMixed(ObjcMsgSend, &intArgs, &floatArgs)
-	return NSPoint{
-		X: math.Float64frombits(uint64(f1)),
-		Y: math.Float64frombits(uint64(f2)),
-	}
+	a := msgArgs{ints: [16]uintptr{uintptr(id), uintptr(sel)}}
+	_, f1, f2 := a.send()
+	return pointFromWords(f1, f2)
 }
 
 func ObjcSendNSRect(id objc.ID, sel objc.SEL) NSRect {
-	if !rectInFloatRegs {
-		return objc.Send[NSRect](id, sel)
-	}
-	var intArgs, floatArgs [8]uintptr
-	intArgs[0] = uintptr(id)
-	intArgs[1] = uintptr(sel)
-	_, f1, f2, f3, f4 := purego.SyscallNMixed(ObjcMsgSend, &intArgs, &floatArgs)
-	return rectFromFloats(f1, f2, f3, f4)
-}
-
-// rectInFloatRegs reports whether an NSRect (four float64s, 32 bytes) is passed and
-// returned in float registers. That holds for arm64 (HFA in d0-d3) but not amd64,
-// where a struct over 16 bytes goes through memory; there the NSRect helpers fall
-// back to objc.Send, which is correct but allocates.
-const rectInFloatRegs = runtime.GOARCH == "arm64"
-
-func rectFromFloats(f1, f2, f3, f4 uintptr) NSRect {
-	return NSRect{
-		Origin: NSPoint{X: math.Float64frombits(uint64(f1)), Y: math.Float64frombits(uint64(f2))},
-		Size:   NSSize{Width: math.Float64frombits(uint64(f3)), Height: math.Float64frombits(uint64(f4))},
-	}
-}
-
-func rectToFloats(r NSRect) (f0, f1, f2, f3 uintptr) {
-	return uintptr(math.Float64bits(r.Origin.X)),
-		uintptr(math.Float64bits(r.Origin.Y)),
-		uintptr(math.Float64bits(r.Size.Width)),
-		uintptr(math.Float64bits(r.Size.Height))
+	var a msgArgs
+	a.ints[rectRecv], a.ints[rectRecv+1] = uintptr(id), uintptr(sel)
+	return a.sendRect()
 }
 
 // ObjcSendNSRectRect returns NSRect from a method that takes an NSRect arg.
 func ObjcSendNSRectRect(id objc.ID, sel objc.SEL, r NSRect) NSRect {
-	if !rectInFloatRegs {
-		return objc.Send[NSRect](id, sel, r)
-	}
-	var intArgs, floatArgs [8]uintptr
-	intArgs[0] = uintptr(id)
-	intArgs[1] = uintptr(sel)
-	floatArgs[0], floatArgs[1], floatArgs[2], floatArgs[3] = rectToFloats(r)
-	_, f1, f2, f3, f4 := purego.SyscallNMixed(ObjcMsgSend, &intArgs, &floatArgs)
-	return rectFromFloats(f1, f2, f3, f4)
+	var a msgArgs
+	a.ints[rectRecv], a.ints[rectRecv+1] = uintptr(id), uintptr(sel)
+	a.setRect(0, r)
+	return a.sendRect()
 }
 
 // ObjcSendNSRectRectInt returns NSRect from a method with NSRect + uintptr args.
 //
 //go:uintptrescapes
 func ObjcSendNSRectRectInt(id objc.ID, sel objc.SEL, r NSRect, a0 uintptr) NSRect {
-	if !rectInFloatRegs {
-		return objc.Send[NSRect](id, sel, r, a0)
-	}
-	var intArgs, floatArgs [8]uintptr
-	intArgs[0] = uintptr(id)
-	intArgs[1] = uintptr(sel)
-	intArgs[2] = a0
-	floatArgs[0], floatArgs[1], floatArgs[2], floatArgs[3] = rectToFloats(r)
-	_, f1, f2, f3, f4 := purego.SyscallNMixed(ObjcMsgSend, &intArgs, &floatArgs)
-	return rectFromFloats(f1, f2, f3, f4)
+	var a msgArgs
+	a.ints[rectRecv], a.ints[rectRecv+1], a.ints[rectRecv+2] = uintptr(id), uintptr(sel), a0
+	a.setRect(0, r)
+	return a.sendRect()
 }
 
 // ObjcSendNSPointPoint returns NSPoint from a method that takes an NSPoint arg.
 func ObjcSendNSPointPoint(id objc.ID, sel objc.SEL, p NSPoint) NSPoint {
-	var intArgs, floatArgs [8]uintptr
-	intArgs[0] = uintptr(id)
-	intArgs[1] = uintptr(sel)
-	floatArgs[0] = uintptr(math.Float64bits(p.X))
-	floatArgs[1] = uintptr(math.Float64bits(p.Y))
-	_, f1, f2, _, _ := purego.SyscallNMixed(ObjcMsgSend, &intArgs, &floatArgs)
-	return NSPoint{
-		X: math.Float64frombits(uint64(f1)),
-		Y: math.Float64frombits(uint64(f2)),
-	}
+	a := msgArgs{ints: [16]uintptr{uintptr(id), uintptr(sel)}}
+	a.setFloat(0, p.X)
+	a.setFloat(1, p.Y)
+	_, f1, f2 := a.send()
+	return pointFromWords(f1, f2)
 }
 
 // ObjcSendBoolPointRect returns bool from a method with NSPoint + NSRect args.
 func ObjcSendBoolPointRect(id objc.ID, sel objc.SEL, p NSPoint, r NSRect) bool {
-	if !rectInFloatRegs {
-		return objc.Send[bool](id, sel, p, r)
-	}
-	var intArgs, floatArgs [8]uintptr
-	intArgs[0] = uintptr(id)
-	intArgs[1] = uintptr(sel)
-	floatArgs[0] = uintptr(math.Float64bits(p.X))
-	floatArgs[1] = uintptr(math.Float64bits(p.Y))
-	floatArgs[2] = uintptr(math.Float64bits(r.Origin.X))
-	floatArgs[3] = uintptr(math.Float64bits(r.Origin.Y))
-	floatArgs[4] = uintptr(math.Float64bits(r.Size.Width))
-	floatArgs[5] = uintptr(math.Float64bits(r.Size.Height))
-	r1, _, _, _, _ := purego.SyscallNMixed(ObjcMsgSend, &intArgs, &floatArgs)
-	return r1 != 0
+	a := msgArgs{ints: [16]uintptr{uintptr(id), uintptr(sel)}}
+	a.setFloat(0, p.X)
+	a.setFloat(1, p.Y)
+	a.setRect(2, r)
+	r1, _, _ := a.send()
+	return r1&0xff != 0
 }
 
-// ObjcSendSize calls a method with an NSSize arg (HFA: 2 float64 in float regs).
+// ObjcSendSize calls a method with an NSSize arg.
 func ObjcSendSize(id objc.ID, sel objc.SEL, s NSSize) {
-	var intArgs, floatArgs [8]uintptr
-	intArgs[0] = uintptr(id)
-	intArgs[1] = uintptr(sel)
-	floatArgs[0] = uintptr(math.Float64bits(s.Width))
-	floatArgs[1] = uintptr(math.Float64bits(s.Height))
-	purego.SyscallNMixed(ObjcMsgSend, &intArgs, &floatArgs)
+	ObjcSendSizeRet(id, sel, s)
 }
 
-// ObjcSendPoint calls a method with an NSPoint arg (HFA: 2 float64 in float regs).
+// ObjcSendPoint calls a method with an NSPoint arg.
 func ObjcSendPoint(id objc.ID, sel objc.SEL, p NSPoint) {
-	var intArgs, floatArgs [8]uintptr
-	intArgs[0] = uintptr(id)
-	intArgs[1] = uintptr(sel)
-	floatArgs[0] = uintptr(math.Float64bits(p.X))
-	floatArgs[1] = uintptr(math.Float64bits(p.Y))
-	purego.SyscallNMixed(ObjcMsgSend, &intArgs, &floatArgs)
+	a := msgArgs{ints: [16]uintptr{uintptr(id), uintptr(sel)}}
+	a.setFloat(0, p.X)
+	a.setFloat(1, p.Y)
+	a.send()
 }
 
 // ObjcSendFloat64Arg calls a method with a float64 arg.
 func ObjcSendFloat64Arg(id objc.ID, sel objc.SEL, f float64) {
-	var intArgs, floatArgs [8]uintptr
-	intArgs[0] = uintptr(id)
-	intArgs[1] = uintptr(sel)
-	floatArgs[0] = uintptr(math.Float64bits(f))
-	purego.SyscallNMixed(ObjcMsgSend, &intArgs, &floatArgs)
+	ObjcSendFloat64ArgRet(id, sel, f)
 }
 
 // ObjcSendFloat64ArgRet calls a method with a float64 arg and returns uintptr.
 func ObjcSendFloat64ArgRet(id objc.ID, sel objc.SEL, f float64) uintptr {
-	var intArgs, floatArgs [8]uintptr
-	intArgs[0] = uintptr(id)
-	intArgs[1] = uintptr(sel)
-	floatArgs[0] = uintptr(math.Float64bits(f))
-	r1, _, _, _, _ := purego.SyscallNMixed(ObjcMsgSend, &intArgs, &floatArgs)
+	a := msgArgs{ints: [16]uintptr{uintptr(id), uintptr(sel)}}
+	a.setFloat(0, f)
+	r1, _, _ := a.send()
 	return r1
 }
 
 // ObjcSendRectBool calls a method with NSRect + bool args (e.g. setFrame:display:).
 func ObjcSendRectBool(id objc.ID, sel objc.SEL, r NSRect, b bool) {
-	if !rectInFloatRegs {
-		id.Send(sel, r, b)
-		return
-	}
-	var intArgs, floatArgs [8]uintptr
-	intArgs[0] = uintptr(id)
-	intArgs[1] = uintptr(sel)
-	if b {
-		intArgs[2] = 1
-	}
-	floatArgs[0], floatArgs[1], floatArgs[2], floatArgs[3] = rectToFloats(r)
-	purego.SyscallNMixed(ObjcMsgSend, &intArgs, &floatArgs)
+	a := msgArgs{ints: [16]uintptr{uintptr(id), uintptr(sel), BoolToUintptr(b)}}
+	a.setRect(0, r)
+	a.send()
 }
 
 // ObjcSendRectIntIntBool calls a method with NSRect + uintptr + uintptr + bool args.
 //
 //go:uintptrescapes
 func ObjcSendRectIntIntBool(id objc.ID, sel objc.SEL, r NSRect, a0, a1 uintptr, b bool) uintptr {
-	if !rectInFloatRegs {
-		return uintptr(id.Send(sel, r, a0, a1, b))
-	}
-	var intArgs, floatArgs [8]uintptr
-	intArgs[0] = uintptr(id)
-	intArgs[1] = uintptr(sel)
-	intArgs[2] = a0
-	intArgs[3] = a1
-	if b {
-		intArgs[4] = 1
-	}
-	floatArgs[0], floatArgs[1], floatArgs[2], floatArgs[3] = rectToFloats(r)
-	r1, _, _, _, _ := purego.SyscallNMixed(ObjcMsgSend, &intArgs, &floatArgs)
+	a := msgArgs{ints: [16]uintptr{uintptr(id), uintptr(sel), a0, a1, BoolToUintptr(b)}}
+	a.setRect(0, r)
+	r1, _, _ := a.send()
 	return r1
 }
 
@@ -261,13 +273,10 @@ func ObjcSendRectIntIntBool(id objc.ID, sel objc.SEL, r NSRect, a0, a1 uintptr, 
 //
 //go:uintptrescapes
 func ObjcSendIntPointInt(id objc.ID, sel objc.SEL, p NSPoint, a0 uintptr) uintptr {
-	var intArgs, floatArgs [8]uintptr
-	intArgs[0] = uintptr(id)
-	intArgs[1] = uintptr(sel)
-	intArgs[2] = a0
-	floatArgs[0] = uintptr(math.Float64bits(p.X))
-	floatArgs[1] = uintptr(math.Float64bits(p.Y))
-	r1, _, _, _, _ := purego.SyscallNMixed(ObjcMsgSend, &intArgs, &floatArgs)
+	a := msgArgs{ints: [16]uintptr{uintptr(id), uintptr(sel), a0}}
+	a.setFloat(0, p.X)
+	a.setFloat(1, p.Y)
+	r1, _, _ := a.send()
 	return r1
 }
 
@@ -275,67 +284,63 @@ func ObjcSendIntPointInt(id objc.ID, sel objc.SEL, p NSPoint, a0 uintptr) uintpt
 //
 //go:uintptrescapes
 func ObjcSendRectIntIDInt(id objc.ID, sel objc.SEL, r NSRect, a0 uintptr, a1 objc.ID, a2 uintptr) uintptr {
-	if !rectInFloatRegs {
-		return uintptr(id.Send(sel, r, a0, a1, a2))
-	}
-	var intArgs, floatArgs [8]uintptr
-	intArgs[0] = uintptr(id)
-	intArgs[1] = uintptr(sel)
-	intArgs[2] = a0
-	intArgs[3] = uintptr(a1)
-	intArgs[4] = a2
-	floatArgs[0], floatArgs[1], floatArgs[2], floatArgs[3] = rectToFloats(r)
-	r1, _, _, _, _ := purego.SyscallNMixed(ObjcMsgSend, &intArgs, &floatArgs)
+	a := msgArgs{ints: [16]uintptr{uintptr(id), uintptr(sel), a0, uintptr(a1), a2}}
+	a.setRect(0, r)
+	r1, _, _ := a.send()
 	return r1
 }
 
 // ObjcSendFloat4 calls a method with 4 float64 args (e.g. colorWithSRGBRed:green:blue:alpha:).
-func ObjcSendFloat4(id objc.ID, sel objc.SEL, f0, f1a, f2a, f3a float64) uintptr {
-	var intArgs, floatArgs [8]uintptr
-	intArgs[0] = uintptr(id)
-	intArgs[1] = uintptr(sel)
-	floatArgs[0] = uintptr(math.Float64bits(f0))
-	floatArgs[1] = uintptr(math.Float64bits(f1a))
-	floatArgs[2] = uintptr(math.Float64bits(f2a))
-	floatArgs[3] = uintptr(math.Float64bits(f3a))
-	r1, _, _, _, _ := purego.SyscallNMixed(ObjcMsgSend, &intArgs, &floatArgs)
+func ObjcSendFloat4(id objc.ID, sel objc.SEL, f0, f1, f2, f3 float64) uintptr {
+	a := msgArgs{ints: [16]uintptr{uintptr(id), uintptr(sel)}}
+	a.setFloat(0, f0)
+	a.setFloat(1, f1)
+	a.setFloat(2, f2)
+	a.setFloat(3, f3)
+	r1, _, _ := a.send()
 	return r1
+}
+
+// ObjcSendStack calls a method whose only argument is a struct passed in memory on amd64
+// (e.g. MTLViewport, MTLScissorRect, MTLClearColor), given as the struct's words.
+func ObjcSendStack(id objc.ID, sel objc.SEL, words ...uintptr) {
+	if !isAMD64 {
+		panic("cocoa: ObjcSendStack is only for amd64")
+	}
+	a := msgArgs{ints: [16]uintptr{uintptr(id), uintptr(sel)}}
+	if copy(a.ints[stackSlot:], words) != len(words) {
+		panic("cocoa: too many words for ObjcSendStack")
+	}
+	a.send()
 }
 
 // ObjcSendPointSizeFloat calls a method with NSPoint + NSSize + float64 args.
 func ObjcSendPointSizeFloat(id objc.ID, sel objc.SEL, p NSPoint, s NSSize, f float64) uintptr {
-	var intArgs, floatArgs [8]uintptr
-	intArgs[0] = uintptr(id)
-	intArgs[1] = uintptr(sel)
-	floatArgs[0] = uintptr(math.Float64bits(p.X))
-	floatArgs[1] = uintptr(math.Float64bits(p.Y))
-	floatArgs[2] = uintptr(math.Float64bits(s.Width))
-	floatArgs[3] = uintptr(math.Float64bits(s.Height))
-	floatArgs[4] = uintptr(math.Float64bits(f))
-	r1, _, _, _, _ := purego.SyscallNMixed(ObjcMsgSend, &intArgs, &floatArgs)
+	a := msgArgs{ints: [16]uintptr{uintptr(id), uintptr(sel)}}
+	a.setFloat(0, p.X)
+	a.setFloat(1, p.Y)
+	a.setFloat(2, s.Width)
+	a.setFloat(3, s.Height)
+	a.setFloat(4, f)
+	r1, _, _ := a.send()
 	return r1
 }
 
 // ObjcSendSizeRet calls a method with an NSSize arg and returns uintptr (e.g. initWithSize:).
 func ObjcSendSizeRet(id objc.ID, sel objc.SEL, s NSSize) uintptr {
-	var intArgs, floatArgs [8]uintptr
-	intArgs[0] = uintptr(id)
-	intArgs[1] = uintptr(sel)
-	floatArgs[0] = uintptr(math.Float64bits(s.Width))
-	floatArgs[1] = uintptr(math.Float64bits(s.Height))
-	r1, _, _, _, _ := purego.SyscallNMixed(ObjcMsgSend, &intArgs, &floatArgs)
+	a := msgArgs{ints: [16]uintptr{uintptr(id), uintptr(sel)}}
+	a.setFloat(0, s.Width)
+	a.setFloat(1, s.Height)
+	r1, _, _ := a.send()
 	return r1
 }
 
 // ObjcSendIDPoint calls a method with an objc.ID + NSPoint args and returns uintptr (e.g. initWithImage:hotSpot:).
 func ObjcSendIDPoint(id objc.ID, sel objc.SEL, a0 objc.ID, p NSPoint) uintptr {
-	var intArgs, floatArgs [8]uintptr
-	intArgs[0] = uintptr(id)
-	intArgs[1] = uintptr(sel)
-	intArgs[2] = uintptr(a0)
-	floatArgs[0] = uintptr(math.Float64bits(p.X))
-	floatArgs[1] = uintptr(math.Float64bits(p.Y))
-	r1, _, _, _, _ := purego.SyscallNMixed(ObjcMsgSend, &intArgs, &floatArgs)
+	a := msgArgs{ints: [16]uintptr{uintptr(id), uintptr(sel), uintptr(a0)}}
+	a.setFloat(0, p.X)
+	a.setFloat(1, p.Y)
+	r1, _, _ := a.send()
 	return r1
 }
 
