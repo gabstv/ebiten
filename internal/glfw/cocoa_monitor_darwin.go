@@ -21,8 +21,8 @@ var nsScreenNumberKey objc.ID
 
 func init() {
 	classNSString := objc.GetClass("NSString")
-	nsScreenNumberKey = objc.ID(classNSString).Send(sel_alloc)
-	nsScreenNumberKey = nsScreenNumberKey.Send(objc.RegisterName("initWithUTF8String:"), "NSScreenNumber\x00")
+	nsScreenNumberKey = objc.ID(cocoa.ObjcSend0(objc.ID(classNSString), sel_alloc))
+	nsScreenNumberKey = objc.ID(cocoa.ObjcSend1(nsScreenNumberKey, objc.RegisterName("initWithUTF8String:"), uintptr(unsafe.Pointer(unsafe.StringData("NSScreenNumber\x00")))))
 }
 
 // GammaRamp describes the gamma ramp for a monitor.
@@ -164,21 +164,21 @@ func endFadeReservation(token uint32) {
 // getMonitorNameNS retrieves the name of a monitor.
 // It tries NSScreen.localizedName first (macOS 10.15+), then falls back to IOKit.
 func getMonitorNameNS(displayID uint32) string {
-	screens := objc.ID(class_NSScreen).Send(sel_screens)
-	count := int(screens.Send(sel_count))
+	screens := objc.ID(cocoa.ObjcSend0(objc.ID(class_NSScreen), sel_screens))
+	count := int(cocoa.ObjcSend0(screens, sel_count))
 	for i := range count {
-		screen := screens.Send(sel_objectAtIndex, i)
-		dict := screen.Send(sel_deviceDescription)
-		screenNum := dict.Send(sel_objectForKey, nsScreenNumberKey)
+		screen := objc.ID(cocoa.ObjcSend1(screens, sel_objectAtIndex, uintptr(i)))
+		dict := objc.ID(cocoa.ObjcSend0(screen, sel_deviceDescription))
+		screenNum := objc.ID(cocoa.ObjcSend1(dict, sel_objectForKey, uintptr(nsScreenNumberKey)))
 		if screenNum == 0 {
 			continue
 		}
-		sid := uint32(screenNum.Send(sel_unsignedIntValue))
+		sid := uint32(cocoa.ObjcSend0(screenNum, sel_unsignedIntValue))
 		// HACK: Compare unit numbers instead of display IDs to work around
 		//       display replacement on machines with automatic graphics switching
 		if cgDisplayUnitNumber(sid) == cgDisplayUnitNumber(displayID) {
-			if screen.Send(objc.RegisterName("respondsToSelector:"), sel_localizedName) != 0 {
-				if name := cstrings.NSStringToString(screen.Send(sel_localizedName)); name != "" {
+			if cocoa.ObjcSend1(screen, objc.RegisterName("respondsToSelector:"), uintptr(sel_localizedName)) != 0 {
+				if name := cstrings.NSStringToString(objc.ID(cocoa.ObjcSend0(screen, sel_localizedName))); name != "" {
 					return name
 				}
 			}
@@ -303,16 +303,16 @@ func cStringToGoString(b []byte) string {
 // on machines with automatic graphics switching.
 func nsScreenForDisplayID(displayID uint32) objc.ID {
 	unitNumber := cgDisplayUnitNumber(displayID)
-	screens := objc.ID(class_NSScreen).Send(sel_screens)
-	count := int(screens.Send(sel_count))
+	screens := objc.ID(cocoa.ObjcSend0(objc.ID(class_NSScreen), sel_screens))
+	count := int(cocoa.ObjcSend0(screens, sel_count))
 	for i := range count {
-		screen := screens.Send(sel_objectAtIndex, i)
-		dict := screen.Send(sel_deviceDescription)
-		screenNum := dict.Send(sel_objectForKey, nsScreenNumberKey)
+		screen := objc.ID(cocoa.ObjcSend1(screens, sel_objectAtIndex, uintptr(i)))
+		dict := objc.ID(cocoa.ObjcSend0(screen, sel_deviceDescription))
+		screenNum := objc.ID(cocoa.ObjcSend1(dict, sel_objectForKey, uintptr(nsScreenNumberKey)))
 		if screenNum == 0 {
 			continue
 		}
-		sid := uint32(screenNum.Send(sel_unsignedIntValue))
+		sid := uint32(cocoa.ObjcSend0(screenNum, sel_unsignedIntValue))
 		if cgDisplayUnitNumber(sid) == unitNumber {
 			return screen
 		}
@@ -499,8 +499,8 @@ func (m *Monitor) platformGetMonitorContentScale() (xscale, yscale float32, err 
 		return 0, 0, fmt.Errorf("glfw: cannot query content scale without screen: %w", PlatformError)
 	}
 
-	points := objc.Send[cocoa.NSRect](m.platform.screen, sel_frame)
-	pixels := objc.Send[cocoa.NSRect](m.platform.screen, sel_convertRectToBacking, points)
+	points := cocoa.ObjcSendNSRect(m.platform.screen, sel_frame)
+	pixels := cocoa.ObjcSendNSRectRect(m.platform.screen, sel_convertRectToBacking, points)
 
 	return float32(pixels.Size.Width / points.Size.Width),
 		float32(pixels.Size.Height / points.Size.Height), nil
@@ -516,13 +516,13 @@ func (m *Monitor) platformGetMonitorWorkarea() (xpos, ypos, width, height int) {
 		return int(bounds.X), int(bounds.Y), int(bounds.Width), int(bounds.Height)
 	}
 
-	visibleFrame := objc.Send[cgRect](screen, sel_visibleFrame)
+	vf := cocoa.ObjcSendNSRect(screen, sel_visibleFrame)
 	primaryBounds := cgDisplayBounds(cgMainDisplayID())
 
-	xpos = int(visibleFrame.X)
-	ypos = int(primaryBounds.Height - visibleFrame.Y - visibleFrame.Height)
-	width = int(visibleFrame.Width)
-	height = int(visibleFrame.Height)
+	xpos = int(vf.Origin.X)
+	ypos = int(primaryBounds.Height - vf.Origin.Y - vf.Size.Height)
+	width = int(vf.Size.Width)
+	height = int(vf.Size.Height)
 	return
 }
 

@@ -89,14 +89,14 @@ func cursorInContentArea(window *Window) bool {
 		return false
 	}
 
-	pos := objc.Send[cocoa.NSPoint](window.platform.object, sel_mouseLocationOutsideOfEventStream)
-	return objc.Send[bool](window.platform.view, sel_mouse_inRect, pos, objc.Send[cocoa.NSRect](window.platform.view, sel_frame))
+	pos := cocoa.ObjcSendNSPoint(window.platform.object, sel_mouseLocationOutsideOfEventStream)
+	return cocoa.ObjcSendBoolPointRect(window.platform.view, sel_mouse_inRect, pos, cocoa.ObjcSendNSRect(window.platform.view, sel_frame))
 }
 
 // hideCursor hides the system cursor and optionally disables mouse/cursor association.
 func hideCursor(window *Window) {
 	if !_glfw.platformWindow.cursorHidden {
-		objc.ID(class_NSCursor).Send(objc.RegisterName("hide"))
+		cocoa.ObjcSend0(objc.ID(class_NSCursor), objc.RegisterName("hide"))
 		_glfw.platformWindow.cursorHidden = true
 	}
 }
@@ -104,7 +104,7 @@ func hideCursor(window *Window) {
 // showCursor shows the system cursor and re-enables mouse/cursor association.
 func showCursor(window *Window) {
 	if _glfw.platformWindow.cursorHidden {
-		objc.ID(class_NSCursor).Send(sel_unhide)
+		cocoa.ObjcSend0(objc.ID(class_NSCursor), sel_unhide)
 		_glfw.platformWindow.cursorHidden = false
 	}
 }
@@ -114,9 +114,9 @@ func updateCursorImage(window *Window) {
 	if window.cursorMode == CursorNormal {
 		showCursor(window)
 		if window.cursor != nil && window.cursor.platform.object != 0 {
-			window.cursor.platform.object.Send(sel_set)
+			cocoa.ObjcSend0(window.cursor.platform.object, sel_set)
 		} else {
-			objc.ID(class_NSCursor).Send(sel_arrowCursor).Send(sel_set)
+			cocoa.ObjcSend0(objc.ID(cocoa.ObjcSend0(objc.ID(class_NSCursor), sel_arrowCursor)), sel_set)
 		}
 	} else {
 		hideCursor(window)
@@ -159,7 +159,7 @@ func windowForEvent(nsWindow objc.ID) *Window {
 
 // nsApp returns the shared NSApplication instance.
 func nsApp() objc.ID {
-	return objc.ID(class_NSApplication).Send(sel_sharedApplication)
+	return objc.ID(cocoa.ObjcSend0(objc.ID(class_NSApplication), sel_sharedApplication))
 }
 
 // registerGLFWClasses registers the GLFWWindow, GLFWWindowDelegate, and GLFWContentView
@@ -218,14 +218,14 @@ func registerGLFWClasses() error {
 					}
 
 					if window.context.source == NativeContextAPI {
-						window.context.platform.object.Send(objc.RegisterName("update"))
+						cocoa.ObjcSend0(window.context.platform.object, objc.RegisterName("update"))
 					}
 
 					if _glfw.platformWindow.disabledCursorWindow == window {
 						_ = window.centerCursorInContentArea()
 					}
 
-					maximized := objc.Send[bool](window.platform.object, sel_isZoomed)
+					maximized := cocoa.ObjcSend0(window.platform.object, sel_isZoomed) != 0
 					if window.platform.maximized != maximized {
 						window.platform.maximized = maximized
 						window.inputWindowMaximize(maximized)
@@ -246,15 +246,15 @@ func registerGLFWClasses() error {
 					}
 
 					if window.context.source == NativeContextAPI {
-						window.context.platform.object.Send(objc.RegisterName("update"))
+						cocoa.ObjcSend0(window.context.platform.object, objc.RegisterName("update"))
 					}
 
 					if _glfw.platformWindow.disabledCursorWindow == window {
 						_ = window.centerCursorInContentArea()
 					}
 
-					frame := objc.Send[cocoa.NSRect](window.platform.object, sel_frame)
-					contentRect := objc.Send[cocoa.NSRect](window.platform.object, sel_contentRectForFrameRect, frame)
+					frame := cocoa.ObjcSendNSRect(window.platform.object, sel_frame)
+					contentRect := cocoa.ObjcSendNSRectRect(window.platform.object, sel_contentRectForFrameRect, frame)
 					xpos := int(contentRect.Origin.X)
 					ypos := int(transformYNS(float32(contentRect.Origin.Y + contentRect.Size.Height - 1)))
 					window.inputWindowPos(xpos, ypos)
@@ -323,7 +323,7 @@ func registerGLFWClasses() error {
 					if window.platform.object == 0 {
 						return
 					}
-					state := uintptr(window.platform.object.Send(sel_occlusionState))
+					state := cocoa.ObjcSend0(window.platform.object, sel_occlusionState)
 					window.platform.occluded = (state & NSWindowOcclusionStateVisible) == 0
 				},
 			},
@@ -348,7 +348,7 @@ func registerGLFWClasses() error {
 					if window == nil {
 						return
 					}
-					flags := uintptr(event.Send(sel_modifierFlags))
+					flags := cocoa.ObjcSend0(event, sel_modifierFlags)
 					window.inputMouseClick(MouseButton1, Press, translateFlags(flags))
 				},
 			},
@@ -359,7 +359,7 @@ func registerGLFWClasses() error {
 					if window == nil {
 						return
 					}
-					flags := uintptr(event.Send(sel_modifierFlags))
+					flags := cocoa.ObjcSend0(event, sel_modifierFlags)
 					window.inputMouseClick(MouseButton1, Release, translateFlags(flags))
 				},
 			},
@@ -370,7 +370,7 @@ func registerGLFWClasses() error {
 					if window == nil {
 						return
 					}
-					flags := uintptr(event.Send(sel_modifierFlags))
+					flags := cocoa.ObjcSend0(event, sel_modifierFlags)
 					window.inputMouseClick(MouseButton2, Press, translateFlags(flags))
 				},
 			},
@@ -381,7 +381,7 @@ func registerGLFWClasses() error {
 					if window == nil {
 						return
 					}
-					flags := uintptr(event.Send(sel_modifierFlags))
+					flags := cocoa.ObjcSend0(event, sel_modifierFlags)
 					window.inputMouseClick(MouseButton2, Release, translateFlags(flags))
 				},
 			},
@@ -392,8 +392,8 @@ func registerGLFWClasses() error {
 					if window == nil {
 						return
 					}
-					flags := uintptr(event.Send(sel_modifierFlags))
-					button := MouseButton(int(event.Send(sel_buttonNumber)))
+					flags := cocoa.ObjcSend0(event, sel_modifierFlags)
+					button := MouseButton(cocoa.ObjcSend0(event, sel_buttonNumber))
 					window.inputMouseClick(button, Press, translateFlags(flags))
 				},
 			},
@@ -404,8 +404,8 @@ func registerGLFWClasses() error {
 					if window == nil {
 						return
 					}
-					flags := uintptr(event.Send(sel_modifierFlags))
-					button := MouseButton(int(event.Send(sel_buttonNumber)))
+					flags := cocoa.ObjcSend0(event, sel_modifierFlags)
+					button := MouseButton(cocoa.ObjcSend0(event, sel_buttonNumber))
 					window.inputMouseClick(button, Release, translateFlags(flags))
 				},
 			},
@@ -484,16 +484,16 @@ func registerGLFWClasses() error {
 					if window == nil {
 						return
 					}
-					keyCode := uint16(event.Send(sel_keyCode))
+					keyCode := uint16(cocoa.ObjcSend0(event, sel_keyCode))
 					key := translateKey(keyCode)
-					flags := uintptr(event.Send(sel_modifierFlags))
+					flags := cocoa.ObjcSend0(event, sel_modifierFlags)
 					mods := translateFlags(flags)
 
 					window.inputKey(key, int(keyCode), Press, mods)
 
 					// Interpret key events for text input.
-					eventArray := objc.ID(class_NSArray).Send(sel_arrayWithObject, event)
-					self.Send(sel_interpretKeyEvents, eventArray)
+					eventArray := objc.ID(cocoa.ObjcSend1(objc.ID(class_NSArray), sel_arrayWithObject, uintptr(event)))
+					cocoa.ObjcSend1(self, sel_interpretKeyEvents, uintptr(eventArray))
 				},
 			},
 			{
@@ -503,9 +503,9 @@ func registerGLFWClasses() error {
 					if window == nil {
 						return objcutil.SendSuper[bool](self, class_GLFWContentView, sel_performKeyEquivalent, event)
 					}
-					keyCode := uint16(event.Send(sel_keyCode))
+					keyCode := uint16(cocoa.ObjcSend0(event, sel_keyCode))
 					key := translateKey(keyCode)
-					flags := uintptr(event.Send(sel_modifierFlags))
+					flags := cocoa.ObjcSend0(event, sel_modifierFlags)
 					mods := translateFlags(flags)
 
 					// Some key combinations are dispatched as key equivalents and
@@ -531,9 +531,9 @@ func registerGLFWClasses() error {
 					if window == nil {
 						return
 					}
-					keyCode := uint16(event.Send(sel_keyCode))
+					keyCode := uint16(cocoa.ObjcSend0(event, sel_keyCode))
 					key := translateKey(keyCode)
-					flags := uintptr(event.Send(sel_modifierFlags))
+					flags := cocoa.ObjcSend0(event, sel_modifierFlags)
 					mods := translateFlags(flags)
 
 					window.inputKey(key, int(keyCode), Release, mods)
@@ -546,9 +546,9 @@ func registerGLFWClasses() error {
 					if window == nil {
 						return
 					}
-					keyCode := uint16(event.Send(sel_keyCode))
+					keyCode := uint16(cocoa.ObjcSend0(event, sel_keyCode))
 					key := translateKey(keyCode)
-					flags := uintptr(event.Send(sel_modifierFlags)) & NSEventModifierFlagDeviceIndependentFlagsMask
+					flags := cocoa.ObjcSend0(event, sel_modifierFlags) & NSEventModifierFlagDeviceIndependentFlagsMask
 					mods := translateFlags(flags)
 
 					modFlag := translateKeyToModifierFlag(key)
@@ -574,15 +574,15 @@ func registerGLFWClasses() error {
 					if window == nil {
 						return
 					}
-					deltaX := objc.Send[float64](event, sel_scrollingDeltaX)
-					deltaY := objc.Send[float64](event, sel_scrollingDeltaY)
+					deltaX := cocoa.ObjcSendFloat64(event, sel_scrollingDeltaX)
+					deltaY := cocoa.ObjcSendFloat64(event, sel_scrollingDeltaY)
 
 					// AppKit's contract for scrollingDeltaX/Y: with precise deltas the values are in
 					// points, which are device-independent pixels; otherwise they are to be multiplied
 					// by a line height.
 					scrollDeltaX, scrollDeltaY := deltaX, deltaY
 					unit := ScrollUnitLine
-					if objc.Send[bool](event, sel_hasPreciseScrollingDeltas) {
+					if cocoa.ObjcSend0(event, sel_hasPreciseScrollingDeltas) != 0 {
 						unit = ScrollUnitPixel
 						deltaX *= 0.1
 						deltaY *= 0.1
@@ -602,15 +602,15 @@ func registerGLFWClasses() error {
 						return
 					}
 
-					contentRect := objc.Send[cocoa.NSRect](window.platform.view, sel_frame)
-					fbRect := objc.Send[cocoa.NSRect](window.platform.view, sel_convertRectToBacking, contentRect)
+					contentRect := cocoa.ObjcSendNSRect(window.platform.view, sel_frame)
+					fbRect := cocoa.ObjcSendNSRectRect(window.platform.view, sel_convertRectToBacking, contentRect)
 					xscale := float32(fbRect.Size.Width / contentRect.Size.Width)
 					yscale := float32(fbRect.Size.Height / contentRect.Size.Height)
 
 					if xscale != window.platform.xscale || yscale != window.platform.yscale {
 						if window.platform.retina && window.platform.layer != 0 {
-							window.platform.layer.Send(objc.RegisterName("setContentsScale:"),
-								objc.Send[float64](window.platform.object, sel_backingScaleFactor))
+							cocoa.ObjcSendFloat64Arg(window.platform.layer, objc.RegisterName("setContentsScale:"),
+								cocoa.ObjcSendFloat64(window.platform.object, sel_backingScaleFactor))
 						}
 
 						window.platform.xscale = xscale
@@ -630,15 +630,15 @@ func registerGLFWClasses() error {
 				Cmd: objc.RegisterName("updateTrackingAreas"),
 				Fn: func(self objc.ID, _ objc.SEL) {
 					// Remove all existing tracking areas.
-					areas := self.Send(sel_trackingAreas)
-					areaCount := int(areas.Send(sel_count))
+					areas := objc.ID(cocoa.ObjcSend0(self, sel_trackingAreas))
+					areaCount := int(cocoa.ObjcSend0(areas, sel_count))
 					for i := range areaCount {
-						area := areas.Send(sel_objectAtIndex, i)
-						self.Send(sel_removeTrackingArea, area)
+						area := objc.ID(cocoa.ObjcSend1(areas, sel_objectAtIndex, uintptr(i)))
+						cocoa.ObjcSend1(self, sel_removeTrackingArea, uintptr(area))
 					}
 
 					// Create new tracking area.
-					bounds := objc.Send[cocoa.NSRect](self, sel_bounds)
+					bounds := cocoa.ObjcSendNSRect(self, sel_bounds)
 					options := uintptr(NSTrackingMouseEnteredAndExited |
 						NSTrackingActiveInKeyWindow |
 						NSTrackingEnabledDuringMouseDrag |
@@ -646,12 +646,13 @@ func registerGLFWClasses() error {
 						NSTrackingInVisibleRect |
 						NSTrackingAssumeInside)
 
-					trackingArea := objc.ID(class_NSTrackingArea).Send(sel_alloc).Send(
+					trackingAreaAlloc := objc.ID(cocoa.ObjcSend0(objc.ID(class_NSTrackingArea), sel_alloc))
+					trackingArea := objc.ID(cocoa.ObjcSendRectIntIDInt(trackingAreaAlloc,
 						sel_initWithRect_options_owner_userInfo,
-						bounds, options, self, 0)
-					self.Send(sel_addTrackingArea, trackingArea)
+						bounds, options, self, 0))
+					cocoa.ObjcSend1(self, sel_addTrackingArea, uintptr(trackingArea))
 					// Balance the alloc; the view now holds the only reference.
-					trackingArea.Send(sel_release)
+					cocoa.ObjcSend0(trackingArea, sel_release)
 
 					// Call super.
 					objcutil.SendSuper[struct{}](self, class_GLFWContentView, objc.RegisterName("updateTrackingAreas"))
@@ -662,7 +663,7 @@ func registerGLFWClasses() error {
 				Fn: func(self objc.ID, _ objc.SEL) {
 					window := getGoWindow(self)
 					if window != nil && window.platform.markedText != 0 {
-						window.platform.markedText.Send(sel_release)
+						cocoa.ObjcSend0(window.platform.markedText, sel_release)
 						window.platform.markedText = 0
 					}
 					delete(theGoWindows, self)
@@ -682,7 +683,7 @@ func registerGLFWClasses() error {
 					if window == nil {
 						return false
 					}
-					return objc.Send[bool](window.platform.object, objc.RegisterName("isOpaque"))
+					return cocoa.ObjcSend0(window.platform.object, objc.RegisterName("isOpaque")) != 0
 				},
 			},
 			{
@@ -706,7 +707,7 @@ func registerGLFWClasses() error {
 					}
 
 					if window.context.source == NativeContextAPI {
-						window.context.platform.object.Send(objc.RegisterName("update"))
+						cocoa.ObjcSend0(window.context.platform.object, objc.RegisterName("update"))
 					}
 
 					window.inputWindowDamage()
@@ -737,7 +738,7 @@ func registerGLFWClasses() error {
 						return false
 					}
 					if window.platform.markedText != 0 {
-						return objc.Send[uintptr](window.platform.markedText, sel_length) > 0
+						return cocoa.ObjcSend0(window.platform.markedText, sel_length) > 0
 					}
 					return false
 				},
@@ -747,7 +748,7 @@ func registerGLFWClasses() error {
 				Fn: func(self objc.ID, _ objc.SEL) nsRange {
 					window := getGoWindow(self)
 					if window != nil && window.platform.markedText != 0 {
-						length := objc.Send[uintptr](window.platform.markedText, sel_length)
+						length := cocoa.ObjcSend0(window.platform.markedText, sel_length)
 						if length > 0 {
 							return nsRange{Location: 0, Length: length - 1}
 						}
@@ -769,12 +770,14 @@ func registerGLFWClasses() error {
 						return
 					}
 					if window.platform.markedText != 0 {
-						window.platform.markedText.Send(sel_release)
+						cocoa.ObjcSend0(window.platform.markedText, sel_release)
 					}
-					if str.Send(sel_isKindOfClass, objc.ID(class_NSAttributedString)) != 0 {
-						window.platform.markedText = objc.ID(class_NSMutableAttributedString).Send(sel_alloc).Send(sel_initWithAttributedString, str)
+					if cocoa.ObjcSend1(str, sel_isKindOfClass, uintptr(class_NSAttributedString)) != 0 {
+						alloc := objc.ID(cocoa.ObjcSend0(objc.ID(class_NSMutableAttributedString), sel_alloc))
+						window.platform.markedText = objc.ID(cocoa.ObjcSend1(alloc, sel_initWithAttributedString, uintptr(str)))
 					} else {
-						window.platform.markedText = objc.ID(class_NSMutableAttributedString).Send(sel_alloc).Send(sel_initWithString, str)
+						alloc := objc.ID(cocoa.ObjcSend0(objc.ID(class_NSMutableAttributedString), sel_alloc))
+						window.platform.markedText = objc.ID(cocoa.ObjcSend1(alloc, sel_initWithString, uintptr(str)))
 					}
 				},
 			},
@@ -786,10 +789,10 @@ func registerGLFWClasses() error {
 						return
 					}
 					if window.platform.markedText != 0 {
-						ms := window.platform.markedText.Send(sel_mutableString)
+						ms := objc.ID(cocoa.ObjcSend0(window.platform.markedText, sel_mutableString))
 						emptyStr := cocoa.NSString_alloc().InitWithUTF8String("")
-						ms.Send(sel_setString, emptyStr.ID)
-						emptyStr.ID.Send(sel_release)
+						cocoa.ObjcSend1(ms, sel_setString, uintptr(emptyStr.ID))
+						cocoa.ObjcSend0(emptyStr.ID, sel_release)
 					}
 				},
 			},
@@ -797,7 +800,7 @@ func registerGLFWClasses() error {
 				Cmd: sel_validAttributesForMarkedText,
 				Fn: func(_ objc.ID, _ objc.SEL) objc.ID {
 					// Return an empty autoreleased NSArray (matching C's [NSArray array]).
-					return objc.ID(class_NSArray).Send(objc.RegisterName("array"))
+					return objc.ID(cocoa.ObjcSend0(objc.ID(class_NSArray), objc.RegisterName("array")))
 				},
 			},
 			{
@@ -813,17 +816,17 @@ func registerGLFWClasses() error {
 					if window == nil {
 						return
 					}
-					nsApp := objc.ID(class_NSApplication).Send(sel_sharedApplication)
-					event := nsApp.Send(sel_currentEvent)
-					flags := uintptr(objc.Send[uint64](event, sel_modifierFlags))
+					nsApp := objc.ID(cocoa.ObjcSend0(objc.ID(class_NSApplication), sel_sharedApplication))
+					event := objc.ID(cocoa.ObjcSend0(nsApp, sel_currentEvent))
+					flags := cocoa.ObjcSend0(event, sel_modifierFlags)
 					mods := translateFlags(flags)
 					plain := mods&ModSuper == 0
 
 					// Get the string from the text object.
 					// The text parameter can be either NSString or NSAttributedString.
 					characters := text
-					if text.Send(sel_isKindOfClass, objc.ID(class_NSAttributedString)) != 0 {
-						characters = text.Send(sel_string)
+					if cocoa.ObjcSend1(text, sel_isKindOfClass, uintptr(class_NSAttributedString)) != 0 {
+						characters = objc.ID(cocoa.ObjcSend0(text, sel_string))
 					}
 					str := cocoa.NSString{ID: characters}
 					s := str.String()
@@ -848,7 +851,7 @@ func registerGLFWClasses() error {
 					if window == nil {
 						return cocoa.NSRect{}
 					}
-					frame := objc.Send[cocoa.NSRect](window.platform.view, sel_frame)
+					frame := cocoa.ObjcSendNSRect(window.platform.view, sel_frame)
 					return cocoa.NSRect{
 						Origin: frame.Origin,
 						Size:   cocoa.CGSize{Width: 0, Height: 0},
@@ -888,35 +891,35 @@ func registerGLFWClasses() error {
 					}
 
 					// Update the cursor position to the drop location.
-					contentRect := objc.Send[cocoa.NSRect](window.platform.view, sel_frame)
-					pos := objc.Send[cocoa.NSPoint](sender, objc.RegisterName("draggingLocation"))
+					contentRect := cocoa.ObjcSendNSRect(window.platform.view, sel_frame)
+					pos := cocoa.ObjcSendNSPoint(sender, objc.RegisterName("draggingLocation"))
 					window.inputCursorPos(pos.X, contentRect.Size.Height-pos.Y)
 
-					pasteboard := sender.Send(sel_draggingPasteboard)
+					pasteboard := objc.ID(cocoa.ObjcSend0(sender, sel_draggingPasteboard))
 					urlClass := objc.ID(class_NSURL)
-					classes := objc.ID(class_NSArray).Send(sel_arrayWithObject, urlClass)
+					classes := objc.ID(cocoa.ObjcSend1(objc.ID(class_NSArray), sel_arrayWithObject, uintptr(urlClass)))
 
 					// Filter to file URLs only.
-					nsYes := objc.ID(objc.GetClass("NSNumber")).Send(objc.RegisterName("numberWithBool:"), true)
-					options := objc.ID(objc.GetClass("NSDictionary")).Send(
+					nsYes := objc.ID(cocoa.ObjcSend1(objc.ID(objc.GetClass("NSNumber")), objc.RegisterName("numberWithBool:"), uintptr(1)))
+					options := objc.ID(cocoa.ObjcSend2(objc.ID(objc.GetClass("NSDictionary")),
 						objc.RegisterName("dictionaryWithObject:forKey:"),
-						uintptr(nsYes), uintptr(nsPasteboardURLReadingFileURLsOnlyKey))
+						uintptr(nsYes), uintptr(nsPasteboardURLReadingFileURLsOnlyKey)))
 
-					urls := pasteboard.Send(sel_readObjectsForClasses_options, classes, uintptr(options))
+					urls := objc.ID(cocoa.ObjcSend2(pasteboard, sel_readObjectsForClasses_options, uintptr(classes), uintptr(options)))
 					var urlCount int
 					if urls != 0 {
-						urlCount = int(urls.Send(sel_count))
+						urlCount = int(cocoa.ObjcSend0(urls, sel_count))
 					}
 
 					if urlCount > 0 {
 						paths := make([]string, urlCount)
 						for i := range urlCount {
-							url := urls.Send(sel_objectAtIndex, i)
+							url := objc.ID(cocoa.ObjcSend1(urls, sel_objectAtIndex, uintptr(i)))
 							// Use fileSystemRepresentation instead of path to handle
 							// HFS+ Unicode normalization correctly.
-							fsRep := url.Send(objc.RegisterName("fileSystemRepresentation"))
+							fsRep := cocoa.ObjcSend0(url, objc.RegisterName("fileSystemRepresentation"))
 							if fsRep != 0 {
-								paths[i] = goStringFromCString(uintptr(fsRep))
+								paths[i] = goStringFromCString(fsRep)
 							}
 						}
 
@@ -960,8 +963,8 @@ func setGoWindow(id objc.ID, window *Window) {
 // handleMouseMoved processes mouse movement events.
 func handleMouseMoved(window *Window, event objc.ID) {
 	if window.cursorMode == CursorDisabled {
-		dx := objc.Send[float64](event, sel_deltaX)
-		dy := objc.Send[float64](event, sel_deltaY)
+		dx := cocoa.ObjcSendFloat64(event, sel_deltaX)
+		dy := cocoa.ObjcSendFloat64(event, sel_deltaY)
 
 		dx -= window.platform.cursorWarpDeltaX
 		dy -= window.platform.cursorWarpDeltaY
@@ -971,10 +974,10 @@ func handleMouseMoved(window *Window, event objc.ID) {
 			window.virtualCursorPosY+dy)
 	} else {
 		// Get the location in the content view.
-		pos := objc.Send[cocoa.NSPoint](event, sel_locationInWindow)
+		pos := cocoa.ObjcSendNSPoint(event, sel_locationInWindow)
 
 		// Convert from Cocoa coordinates (origin at bottom-left) to GLFW coordinates (origin at top-left).
-		contentRect := objc.Send[cocoa.NSRect](window.platform.view, sel_frame)
+		contentRect := cocoa.ObjcSendNSRect(window.platform.view, sel_frame)
 		pos.Y = contentRect.Size.Height - pos.Y
 
 		window.inputCursorPos(pos.X, pos.Y)
@@ -990,8 +993,8 @@ func updateWindowSize(window *Window) {
 		return
 	}
 
-	contentRect := objc.Send[cocoa.NSRect](window.platform.view, sel_frame)
-	fbRect := objc.Send[cocoa.NSRect](window.platform.view, sel_convertRectToBacking, contentRect)
+	contentRect := cocoa.ObjcSendNSRect(window.platform.view, sel_frame)
+	fbRect := cocoa.ObjcSendNSRectRect(window.platform.view, sel_convertRectToBacking, contentRect)
 
 	fbWidth := int(fbRect.Size.Width)
 	fbHeight := int(fbRect.Size.Height)
@@ -1019,7 +1022,7 @@ func createNativeWindow(window *Window, wndconfig *wndconfig, fbconfig_ *fbconfi
 
 	// Create the delegate first (before the window, to avoid leaking the
 	// window if delegate creation fails).
-	delegateID := objc.ID(class_GLFWWindowDelegate).Send(sel_alloc).Send(sel_init)
+	delegateID := objc.ID(cocoa.ObjcSend0(objc.ID(cocoa.ObjcSend0(objc.ID(class_GLFWWindowDelegate), sel_alloc)), sel_init))
 	if delegateID == 0 {
 		return fmt.Errorf("glfw: failed to create window delegate: %w", PlatformError)
 	}
@@ -1057,8 +1060,9 @@ func createNativeWindow(window *Window, wndconfig *wndconfig, fbconfig_ *fbconfi
 	}
 
 	// Create the GLFWWindow instance.
-	nsWindow := objc.ID(class_GLFWWindow).Send(sel_alloc).Send(sel_initWithContentRect_styleMask_backing_defer,
-		contentRect, styleMask, uintptr(NSBackingStoreBuffered), false)
+	nsWindowAlloc := objc.ID(cocoa.ObjcSend0(objc.ID(class_GLFWWindow), sel_alloc))
+	nsWindow := objc.ID(cocoa.ObjcSendRectIntIntBool(nsWindowAlloc, sel_initWithContentRect_styleMask_backing_defer,
+		contentRect, styleMask, uintptr(NSBackingStoreBuffered), false))
 	if nsWindow == 0 {
 		return fmt.Errorf("glfw: failed to create Cocoa window: %w", PlatformError)
 	}
@@ -1066,80 +1070,80 @@ func createNativeWindow(window *Window, wndconfig *wndconfig, fbconfig_ *fbconfi
 	window.platform.object = nsWindow
 
 	if window.monitor != nil {
-		nsWindow.Send(sel_setLevel, uintptr(NSMainMenuWindowLevel+1))
+		cocoa.ObjcSend1(nsWindow, sel_setLevel, uintptr(NSMainMenuWindowLevel+1))
 	} else {
 		// Center the window on the screen.
-		nsWindow.Send(objc.RegisterName("center"))
+		cocoa.ObjcSend0(nsWindow, objc.RegisterName("center"))
 		cascadeIn := cocoa.NSPoint{
 			X: _glfw.platformWindow.cascadePoint[0],
 			Y: _glfw.platformWindow.cascadePoint[1],
 		}
-		cascadeOut := objc.Send[cocoa.NSPoint](nsWindow, objc.RegisterName("cascadeTopLeftFromPoint:"), cascadeIn)
+		cascadeOut := cocoa.ObjcSendNSPointPoint(nsWindow, objc.RegisterName("cascadeTopLeftFromPoint:"), cascadeIn)
 		_glfw.platformWindow.cascadePoint[0] = cascadeOut.X
 		_glfw.platformWindow.cascadePoint[1] = cascadeOut.Y
 
 		if wndconfig.resizable {
-			nsWindow.Send(sel_setCollectionBehavior, uintptr(_NSWindowCollectionBehaviorFullScreenPrimary|_NSWindowCollectionBehaviorManaged))
+			cocoa.ObjcSend1(nsWindow, sel_setCollectionBehavior, uintptr(_NSWindowCollectionBehaviorFullScreenPrimary|_NSWindowCollectionBehaviorManaged))
 		} else {
-			nsWindow.Send(sel_setCollectionBehavior, uintptr(_NSWindowCollectionBehaviorFullScreenNone))
+			cocoa.ObjcSend1(nsWindow, sel_setCollectionBehavior, uintptr(_NSWindowCollectionBehaviorFullScreenNone))
 		}
 
 		if wndconfig.floating {
-			nsWindow.Send(sel_setLevel, uintptr(NSFloatingWindowLevel))
+			cocoa.ObjcSend1(nsWindow, sel_setLevel, uintptr(NSFloatingWindowLevel))
 		}
 
 		if wndconfig.maximized {
-			nsWindow.Send(sel_zoom, 0)
+			cocoa.ObjcSend1(nsWindow, sel_zoom, 0)
 		}
 	}
 
 	if len(wndconfig.frameName) > 0 {
 		name := cocoa.NSString_alloc().InitWithUTF8String(wndconfig.frameName)
-		nsWindow.Send(sel_setFrameAutosaveName, name.ID)
-		name.ID.Send(sel_release)
+		cocoa.ObjcSend1(nsWindow, sel_setFrameAutosaveName, uintptr(name.ID))
+		cocoa.ObjcSend0(name.ID, sel_release)
 	}
 
 	// Create the content view.
-	viewID := objc.ID(class_GLFWContentView).Send(sel_alloc).Send(sel_init)
+	viewID := objc.ID(cocoa.ObjcSend0(objc.ID(cocoa.ObjcSend0(objc.ID(class_GLFWContentView), sel_alloc)), sel_init))
 	setGoWindow(viewID, window)
 	window.platform.view = viewID
 	window.platform.retina = wndconfig.retina
-	window.platform.markedText = objc.ID(class_NSMutableAttributedString).Send(sel_alloc).Send(objc.RegisterName("init"))
+	window.platform.markedText = objc.ID(cocoa.ObjcSend0(objc.ID(cocoa.ObjcSend0(objc.ID(class_NSMutableAttributedString), sel_alloc)), objc.RegisterName("init")))
 
 	// Handle transparent framebuffer.
 	if fbconfig_.transparent {
-		nsWindow.Send(sel_setOpaque, false)
-		nsWindow.Send(sel_setHasShadow, false)
-		nsWindow.Send(sel_setBackgroundColor, objc.ID(class_NSColor).Send(sel_clearColor))
+		cocoa.ObjcSend1(nsWindow, sel_setOpaque, 0)
+		cocoa.ObjcSend1(nsWindow, sel_setHasShadow, 0)
+		cocoa.ObjcSend1(nsWindow, sel_setBackgroundColor, cocoa.ObjcSend0(objc.ID(class_NSColor), sel_clearColor))
 	}
 
-	nsWindow.Send(sel_setContentView, viewID)
-	nsWindow.Send(sel_makeFirstResponder, viewID)
+	cocoa.ObjcSend1(nsWindow, sel_setContentView, uintptr(viewID))
+	cocoa.ObjcSend1(nsWindow, sel_makeFirstResponder, uintptr(viewID))
 	titleStr := cocoa.NSString_alloc().InitWithUTF8String(wndconfig.title)
-	nsWindow.Send(sel_setTitle, titleStr.ID)
-	titleStr.ID.Send(sel_release)
-	nsWindow.Send(sel_setDelegate, delegateID)
-	nsWindow.Send(objc.RegisterName("setAcceptsMouseMovedEvents:"), true)
-	nsWindow.Send(sel_setRestorable, false)
+	cocoa.ObjcSend1(nsWindow, sel_setTitle, uintptr(titleStr.ID))
+	cocoa.ObjcSend0(titleStr.ID, sel_release)
+	cocoa.ObjcSend1(nsWindow, sel_setDelegate, uintptr(delegateID))
+	cocoa.ObjcSend1(nsWindow, objc.RegisterName("setAcceptsMouseMovedEvents:"), uintptr(1))
+	cocoa.ObjcSend1(nsWindow, sel_setRestorable, 0)
 
 	// Disable window tabbing (macOS 10.12+).
 	sel_setTabbingMode := objc.RegisterName("setTabbingMode:")
-	if nsWindow.Send(objc.RegisterName("respondsToSelector:"), sel_setTabbingMode) != 0 {
-		nsWindow.Send(sel_setTabbingMode, uintptr(2)) // NSWindowTabbingModeDisallowed = 2
+	if cocoa.ObjcSend1(nsWindow, objc.RegisterName("respondsToSelector:"), uintptr(sel_setTabbingMode)) != 0 {
+		cocoa.ObjcSend1(nsWindow, sel_setTabbingMode, uintptr(2)) // NSWindowTabbingModeDisallowed = 2
 	}
 
-	viewID.Send(objc.RegisterName("updateTrackingAreas"))
+	cocoa.ObjcSend0(viewID, objc.RegisterName("updateTrackingAreas"))
 
 	// Register for dragged types (URLs).
-	typesArray := objc.ID(class_NSArray).Send(sel_arrayWithObject, nsPasteboardTypeURL)
-	viewID.Send(sel_registerForDraggedTypes, typesArray)
+	typesArray := objc.ID(cocoa.ObjcSend1(objc.ID(class_NSArray), sel_arrayWithObject, uintptr(nsPasteboardTypeURL)))
+	cocoa.ObjcSend1(viewID, sel_registerForDraggedTypes, uintptr(typesArray))
 
 	// Update initial size cache.
-	contentViewRect := objc.Send[cocoa.NSRect](viewID, sel_frame)
+	contentViewRect := cocoa.ObjcSendNSRect(viewID, sel_frame)
 	window.platform.width = int(contentViewRect.Size.Width)
 	window.platform.height = int(contentViewRect.Size.Height)
 
-	fbRect := objc.Send[cocoa.NSRect](viewID, sel_convertRectToBacking, contentViewRect)
+	fbRect := cocoa.ObjcSendNSRectRect(viewID, sel_convertRectToBacking, contentViewRect)
 	window.platform.fbWidth = int(fbRect.Size.Width)
 	window.platform.fbHeight = int(fbRect.Size.Height)
 
@@ -1212,7 +1216,7 @@ func (w *Window) platformDestroyWindow() error {
 	}
 
 	if w.platform.object != 0 {
-		w.platform.object.Send(sel_orderOut, 0)
+		cocoa.ObjcSend1(w.platform.object, sel_orderOut, 0)
 	}
 
 	if w.monitor != nil {
@@ -1228,21 +1232,21 @@ func (w *Window) platformDestroyWindow() error {
 	}
 
 	if w.platform.delegate != 0 {
-		w.platform.object.Send(sel_setDelegate, 0)
+		cocoa.ObjcSend1(w.platform.object, sel_setDelegate, 0)
 		delete(theGoWindows, w.platform.delegate)
-		w.platform.delegate.Send(sel_release)
+		cocoa.ObjcSend0(w.platform.delegate, sel_release)
 		w.platform.delegate = 0
 	}
 
 	if w.platform.view != 0 {
 		// The view's theGoWindows entry is removed in the dealloc callback, which fires
 		// only after the NSWindow releases its content view.
-		w.platform.view.Send(sel_release)
+		cocoa.ObjcSend0(w.platform.view, sel_release)
 		w.platform.view = 0
 	}
 
 	if w.platform.object != 0 {
-		w.platform.object.Send(objc.RegisterName("close"))
+		cocoa.ObjcSend0(w.platform.object, objc.RegisterName("close"))
 		w.platform.object = 0
 	}
 
@@ -1259,11 +1263,11 @@ func (w *Window) platformSetWindowTitle(title string) error {
 	defer pool.Release()
 
 	s := cocoa.NSString_alloc().InitWithUTF8String(title)
-	w.platform.object.Send(sel_setTitle, s.ID)
+	cocoa.ObjcSend1(w.platform.object, sel_setTitle, uintptr(s.ID))
 	// HACK: Set the miniwindow title explicitly as setTitle: doesn't update it
 	//       if the window lacks NSWindowStyleMaskTitled
-	w.platform.object.Send(sel_setMiniwindowTitle, s.ID)
-	s.ID.Send(sel_release)
+	cocoa.ObjcSend1(w.platform.object, sel_setMiniwindowTitle, uintptr(s.ID))
+	cocoa.ObjcSend0(s.ID, sel_release)
 	return nil
 }
 
@@ -1276,8 +1280,8 @@ func (w *Window) platformGetWindowPos() (xpos, ypos int, err error) {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	frame := objc.Send[cocoa.NSRect](w.platform.object, sel_frame)
-	contentRect := objc.Send[cocoa.NSRect](w.platform.object, sel_contentRectForFrameRect, frame)
+	frame := cocoa.ObjcSendNSRect(w.platform.object, sel_frame)
+	contentRect := cocoa.ObjcSendNSRectRect(w.platform.object, sel_contentRectForFrameRect, frame)
 
 	xpos = int(contentRect.Origin.X)
 	ypos = int(transformYNS(float32(contentRect.Origin.Y + contentRect.Size.Height - 1)))
@@ -1288,7 +1292,7 @@ func (w *Window) platformSetWindowPos(xpos, ypos int) error {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	viewFrame := objc.Send[cocoa.NSRect](w.platform.view, sel_frame)
+	viewFrame := cocoa.ObjcSendNSRect(w.platform.view, sel_frame)
 	dummyRect := cocoa.NSRect{
 		Origin: cocoa.NSPoint{
 			X: float64(xpos),
@@ -1297,8 +1301,8 @@ func (w *Window) platformSetWindowPos(xpos, ypos int) error {
 		Size: cocoa.NSSize{Width: 0, Height: 0},
 	}
 
-	frameRect := objc.Send[cocoa.NSRect](w.platform.object, sel_frameRectForContentRect, dummyRect)
-	w.platform.object.Send(sel_setFrameOrigin, frameRect.Origin)
+	frameRect := cocoa.ObjcSendNSRectRect(w.platform.object, sel_frameRectForContentRect, dummyRect)
+	cocoa.ObjcSendPoint(w.platform.object, sel_setFrameOrigin, frameRect.Origin)
 	return nil
 }
 
@@ -1306,7 +1310,7 @@ func (w *Window) platformGetWindowSize() (width, height int, err error) {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	contentRect := objc.Send[cocoa.NSRect](w.platform.view, sel_frame)
+	contentRect := cocoa.ObjcSendNSRect(w.platform.view, sel_frame)
 	return int(contentRect.Size.Width), int(contentRect.Size.Height), nil
 }
 
@@ -1323,12 +1327,12 @@ func (w *Window) platformSetWindowSize(width, height int) error {
 		return nil
 	}
 
-	contentRect := objc.Send[cocoa.NSRect](w.platform.object, sel_contentRectForFrameRect,
-		objc.Send[cocoa.NSRect](w.platform.object, sel_frame))
+	contentRect := cocoa.ObjcSendNSRectRect(w.platform.object, sel_contentRectForFrameRect,
+		cocoa.ObjcSendNSRect(w.platform.object, sel_frame))
 	contentRect.Origin.Y += contentRect.Size.Height - float64(height)
 	contentRect.Size = cocoa.NSSize{Width: float64(width), Height: float64(height)}
-	frameRect := objc.Send[cocoa.NSRect](w.platform.object, sel_frameRectForContentRect, contentRect)
-	w.platform.object.Send(objc.RegisterName("setFrame:display:"), frameRect, true)
+	frameRect := cocoa.ObjcSendNSRectRect(w.platform.object, sel_frameRectForContentRect, contentRect)
+	cocoa.ObjcSendRectBool(w.platform.object, objc.RegisterName("setFrame:display:"), frameRect, true)
 	return nil
 }
 
@@ -1337,15 +1341,15 @@ func (w *Window) platformSetWindowSizeLimits(minwidth, minheight, maxwidth, maxh
 	defer pool.Release()
 
 	if minwidth == DontCare || minheight == DontCare {
-		w.platform.object.Send(sel_setContentMinSize, cocoa.NSSize{Width: 0, Height: 0})
+		cocoa.ObjcSendSize(w.platform.object, sel_setContentMinSize, cocoa.NSSize{Width: 0, Height: 0})
 	} else {
-		w.platform.object.Send(sel_setContentMinSize, cocoa.NSSize{Width: float64(minwidth), Height: float64(minheight)})
+		cocoa.ObjcSendSize(w.platform.object, sel_setContentMinSize, cocoa.NSSize{Width: float64(minwidth), Height: float64(minheight)})
 	}
 
 	if maxwidth == DontCare || maxheight == DontCare {
-		w.platform.object.Send(sel_setContentMaxSize, cocoa.NSSize{Width: math.MaxFloat64, Height: math.MaxFloat64})
+		cocoa.ObjcSendSize(w.platform.object, sel_setContentMaxSize, cocoa.NSSize{Width: math.MaxFloat64, Height: math.MaxFloat64})
 	} else {
-		w.platform.object.Send(sel_setContentMaxSize, cocoa.NSSize{Width: float64(maxwidth), Height: float64(maxheight)})
+		cocoa.ObjcSendSize(w.platform.object, sel_setContentMaxSize, cocoa.NSSize{Width: float64(maxwidth), Height: float64(maxheight)})
 	}
 
 	return nil
@@ -1356,9 +1360,9 @@ func (w *Window) platformSetWindowAspectRatio(numer, denom int) error {
 	defer pool.Release()
 
 	if numer == DontCare || denom == DontCare {
-		w.platform.object.Send(sel_setResizeIncrements, cocoa.NSSize{Width: 1, Height: 1})
+		cocoa.ObjcSendSize(w.platform.object, sel_setResizeIncrements, cocoa.NSSize{Width: 1, Height: 1})
 	} else {
-		w.platform.object.Send(sel_setContentAspectRatio, cocoa.NSSize{Width: float64(numer), Height: float64(denom)})
+		cocoa.ObjcSendSize(w.platform.object, sel_setContentAspectRatio, cocoa.NSSize{Width: float64(numer), Height: float64(denom)})
 	}
 	return nil
 }
@@ -1367,8 +1371,8 @@ func (w *Window) platformGetFramebufferSize() (width, height int, err error) {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	contentRect := objc.Send[cocoa.NSRect](w.platform.view, sel_frame)
-	fbRect := objc.Send[cocoa.NSRect](w.platform.view, sel_convertRectToBacking, contentRect)
+	contentRect := cocoa.ObjcSendNSRect(w.platform.view, sel_frame)
+	fbRect := cocoa.ObjcSendNSRectRect(w.platform.view, sel_convertRectToBacking, contentRect)
 	return int(fbRect.Size.Width), int(fbRect.Size.Height), nil
 }
 
@@ -1376,8 +1380,8 @@ func (w *Window) platformGetWindowFrameSize() (left, top, right, bottom int, err
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	contentRect := objc.Send[cocoa.NSRect](w.platform.view, sel_frame)
-	frameRect := objc.Send[cocoa.NSRect](w.platform.object, sel_frameRectForContentRect, contentRect)
+	contentRect := cocoa.ObjcSendNSRect(w.platform.view, sel_frame)
+	frameRect := cocoa.ObjcSendNSRectRect(w.platform.object, sel_frameRectForContentRect, contentRect)
 
 	left = int(contentRect.Origin.X - frameRect.Origin.X)
 	top = int((frameRect.Origin.Y + frameRect.Size.Height) - (contentRect.Origin.Y + contentRect.Size.Height))
@@ -1390,8 +1394,8 @@ func (w *Window) platformGetWindowContentScale() (xscale, yscale float32, err er
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	points := objc.Send[cocoa.NSRect](w.platform.view, sel_frame)
-	pixels := objc.Send[cocoa.NSRect](w.platform.view, sel_convertRectToBacking, points)
+	points := cocoa.ObjcSendNSRect(w.platform.view, sel_frame)
+	pixels := cocoa.ObjcSendNSRectRect(w.platform.view, sel_convertRectToBacking, points)
 
 	return float32(pixels.Size.Width / points.Size.Width), float32(pixels.Size.Height / points.Size.Height), nil
 }
@@ -1400,17 +1404,17 @@ func (w *Window) platformIconifyWindow() {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	w.platform.object.Send(sel_miniaturize, 0)
+	cocoa.ObjcSend1(w.platform.object, sel_miniaturize, 0)
 }
 
 func (w *Window) platformRestoreWindow() {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	if objc.Send[bool](w.platform.object, objc.RegisterName("isMiniaturized")) {
-		w.platform.object.Send(sel_deminiaturize, 0)
-	} else if objc.Send[bool](w.platform.object, sel_isZoomed) {
-		w.platform.object.Send(sel_zoom, 0)
+	if cocoa.ObjcSend0(w.platform.object, objc.RegisterName("isMiniaturized")) != 0 {
+		cocoa.ObjcSend1(w.platform.object, sel_deminiaturize, 0)
+	} else if cocoa.ObjcSend0(w.platform.object, sel_isZoomed) != 0 {
+		cocoa.ObjcSend1(w.platform.object, sel_zoom, 0)
 	}
 }
 
@@ -1418,8 +1422,8 @@ func (w *Window) platformMaximizeWindow() error {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	if !objc.Send[bool](w.platform.object, sel_isZoomed) {
-		w.platform.object.Send(sel_zoom, 0)
+	if cocoa.ObjcSend0(w.platform.object, sel_isZoomed) == 0 {
+		cocoa.ObjcSend1(w.platform.object, sel_zoom, 0)
 	}
 	return nil
 }
@@ -1440,14 +1444,14 @@ func (w *Window) platformShowWindow() {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	w.platform.object.Send(sel_orderFront, 0)
+	cocoa.ObjcSend1(w.platform.object, sel_orderFront, 0)
 }
 
 func (w *Window) platformHideWindow() {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	w.platform.object.Send(sel_orderOut, 0)
+	cocoa.ObjcSend1(w.platform.object, sel_orderOut, 0)
 }
 
 func (w *Window) platformRequestWindowAttention() {
@@ -1455,15 +1459,15 @@ func (w *Window) platformRequestWindowAttention() {
 	defer pool.Release()
 
 	// NSInformationalRequest = 10
-	nsApp().Send(sel_requestUserAttention, uintptr(10))
+	cocoa.ObjcSend1(nsApp(), sel_requestUserAttention, uintptr(10))
 }
 
 func (w *Window) platformFocusWindow() error {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	nsApp().Send(sel_activateIgnoringOtherApps, true)
-	w.platform.object.Send(sel_makeKeyAndOrderFront, 0)
+	cocoa.ObjcSend1(nsApp(), sel_activateIgnoringOtherApps, uintptr(1))
+	cocoa.ObjcSend1(w.platform.object, sel_makeKeyAndOrderFront, 0)
 	return nil
 }
 
@@ -1486,9 +1490,9 @@ func (w *Window) platformSetWindowMonitor(monitor *Monitor, xpos, ypos, width, h
 				},
 				Size: cocoa.NSSize{Width: float64(width), Height: float64(height)},
 			}
-			styleMask := uintptr(objc.Send[uint64](w.platform.object, sel_styleMask))
-			frameRect := objc.Send[cocoa.NSRect](w.platform.object, sel_frameRectForContentRect_styleMask, contentRect, styleMask)
-			w.platform.object.Send(objc.RegisterName("setFrame:display:"), frameRect, true)
+			styleMask := cocoa.ObjcSend0(w.platform.object, sel_styleMask)
+			frameRect := cocoa.ObjcSendNSRectRectInt(w.platform.object, sel_frameRectForContentRect_styleMask, contentRect, styleMask)
+			cocoa.ObjcSendRectBool(w.platform.object, objc.RegisterName("setFrame:display:"), frameRect, true)
 		}
 		return nil
 	}
@@ -1506,7 +1510,7 @@ func (w *Window) platformSetWindowMonitor(monitor *Monitor, xpos, ypos, width, h
 		return err
 	}
 
-	styleMask := uintptr(objc.Send[uint64](w.platform.object, sel_styleMask))
+	styleMask := cocoa.ObjcSend0(w.platform.object, sel_styleMask)
 
 	if w.monitor != nil {
 		styleMask &^= NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable
@@ -1523,13 +1527,13 @@ func (w *Window) platformSetWindowMonitor(monitor *Monitor, xpos, ypos, width, h
 		}
 	}
 
-	w.platform.object.Send(sel_setStyleMask, styleMask)
+	cocoa.ObjcSend1(w.platform.object, sel_setStyleMask, styleMask)
 	// HACK: Changing the style mask can cause the first responder to be cleared
-	w.platform.object.Send(sel_makeFirstResponder, w.platform.view)
+	cocoa.ObjcSend1(w.platform.object, sel_makeFirstResponder, uintptr(w.platform.view))
 
 	if w.monitor != nil {
-		w.platform.object.Send(sel_setLevel, uintptr(NSMainMenuWindowLevel+1))
-		w.platform.object.Send(sel_setHasShadow, false)
+		cocoa.ObjcSend1(w.platform.object, sel_setLevel, uintptr(NSMainMenuWindowLevel+1))
+		cocoa.ObjcSend1(w.platform.object, sel_setHasShadow, 0)
 
 		if err := w.acquireMonitor(); err != nil {
 			return err
@@ -1542,38 +1546,38 @@ func (w *Window) platformSetWindowMonitor(monitor *Monitor, xpos, ypos, width, h
 			},
 			Size: cocoa.NSSize{Width: float64(width), Height: float64(height)},
 		}
-		frameRect := objc.Send[cocoa.NSRect](w.platform.object, sel_frameRectForContentRect_styleMask, contentRect, styleMask)
-		w.platform.object.Send(objc.RegisterName("setFrame:display:"), frameRect, true)
+		frameRect := cocoa.ObjcSendNSRectRectInt(w.platform.object, sel_frameRectForContentRect_styleMask, contentRect, styleMask)
+		cocoa.ObjcSendRectBool(w.platform.object, objc.RegisterName("setFrame:display:"), frameRect, true)
 
 		if w.numer != DontCare && w.denom != DontCare {
-			w.platform.object.Send(sel_setContentAspectRatio, cocoa.NSSize{Width: float64(w.numer), Height: float64(w.denom)})
+			cocoa.ObjcSendSize(w.platform.object, sel_setContentAspectRatio, cocoa.NSSize{Width: float64(w.numer), Height: float64(w.denom)})
 		}
 
 		if w.minwidth != DontCare && w.minheight != DontCare {
-			w.platform.object.Send(sel_setContentMinSize, cocoa.NSSize{Width: float64(w.minwidth), Height: float64(w.minheight)})
+			cocoa.ObjcSendSize(w.platform.object, sel_setContentMinSize, cocoa.NSSize{Width: float64(w.minwidth), Height: float64(w.minheight)})
 		}
 
 		if w.maxwidth != DontCare && w.maxheight != DontCare {
-			w.platform.object.Send(sel_setContentMaxSize, cocoa.NSSize{Width: float64(w.maxwidth), Height: float64(w.maxheight)})
+			cocoa.ObjcSendSize(w.platform.object, sel_setContentMaxSize, cocoa.NSSize{Width: float64(w.maxwidth), Height: float64(w.maxheight)})
 		}
 
 		if w.floating {
-			w.platform.object.Send(sel_setLevel, uintptr(NSFloatingWindowLevel))
+			cocoa.ObjcSend1(w.platform.object, sel_setLevel, uintptr(NSFloatingWindowLevel))
 		} else {
-			w.platform.object.Send(sel_setLevel, uintptr(NSNormalWindowLevel))
+			cocoa.ObjcSend1(w.platform.object, sel_setLevel, uintptr(NSNormalWindowLevel))
 		}
 
 		if w.resizable {
-			w.platform.object.Send(sel_setCollectionBehavior, uintptr(_NSWindowCollectionBehaviorFullScreenPrimary|_NSWindowCollectionBehaviorManaged))
+			cocoa.ObjcSend1(w.platform.object, sel_setCollectionBehavior, uintptr(_NSWindowCollectionBehaviorFullScreenPrimary|_NSWindowCollectionBehaviorManaged))
 		} else {
-			w.platform.object.Send(sel_setCollectionBehavior, uintptr(_NSWindowCollectionBehaviorFullScreenNone))
+			cocoa.ObjcSend1(w.platform.object, sel_setCollectionBehavior, uintptr(_NSWindowCollectionBehaviorFullScreenNone))
 		}
 
-		w.platform.object.Send(sel_setHasShadow, true)
+		cocoa.ObjcSend1(w.platform.object, sel_setHasShadow, uintptr(1))
 		// HACK: Clearing NSWindowStyleMaskTitled resets and disables the window
 		//       title property but the miniwindow title property is unaffected
-		miniTitle := w.platform.object.Send(sel_miniwindowTitle)
-		w.platform.object.Send(sel_setTitle, miniTitle)
+		miniTitle := cocoa.ObjcSend0(w.platform.object, sel_miniwindowTitle)
+		cocoa.ObjcSend1(w.platform.object, sel_setTitle, miniTitle)
 	}
 
 	return nil
@@ -1583,21 +1587,21 @@ func (w *Window) platformWindowFocused() bool {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	return objc.Send[bool](w.platform.object, sel_isKeyWindow)
+	return cocoa.ObjcSend0(w.platform.object, sel_isKeyWindow) != 0
 }
 
 func (w *Window) platformWindowIconified() bool {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	return objc.Send[bool](w.platform.object, sel_isMiniaturized)
+	return cocoa.ObjcSend0(w.platform.object, sel_isMiniaturized) != 0
 }
 
 func (w *Window) platformWindowVisible() bool {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	return objc.Send[bool](w.platform.object, sel_isVisible)
+	return cocoa.ObjcSend0(w.platform.object, sel_isVisible) != 0
 }
 
 func (w *Window) platformWindowMaximized() bool {
@@ -1605,7 +1609,7 @@ func (w *Window) platformWindowMaximized() bool {
 	defer pool.Release()
 
 	if w.resizable {
-		return objc.Send[bool](w.platform.object, sel_isZoomed)
+		return cocoa.ObjcSend0(w.platform.object, sel_isZoomed) != 0
 	}
 	return false
 }
@@ -1614,16 +1618,16 @@ func (w *Window) platformWindowHovered() (bool, error) {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	pos := objc.Send[cocoa.NSPoint](objc.ID(class_NSEvent), objc.RegisterName("mouseLocation"))
+	pos := cocoa.ObjcSendNSPoint(objc.ID(class_NSEvent), objc.RegisterName("mouseLocation"))
 
 	// Check if this window is the topmost window at the cursor position.
-	topWindowNumber := objc.Send[uintptr](objc.ID(class_NSWindow), objc.RegisterName("windowNumberAtPoint:belowWindowWithWindowNumber:"), pos, uintptr(0))
-	if topWindowNumber != uintptr(w.platform.object.Send(sel_windowNumber)) {
+	topWindowNumber := cocoa.ObjcSendIntPointInt(objc.ID(class_NSWindow), objc.RegisterName("windowNumberAtPoint:belowWindowWithWindowNumber:"), pos, uintptr(0))
+	if topWindowNumber != cocoa.ObjcSend0(w.platform.object, sel_windowNumber) {
 		return false, nil
 	}
 
-	viewFrame := objc.Send[cocoa.NSRect](w.platform.view, sel_frame)
-	screenRect := objc.Send[cocoa.NSRect](w.platform.object, sel_convertRectToScreen, viewFrame)
+	viewFrame := cocoa.ObjcSendNSRect(w.platform.view, sel_frame)
+	screenRect := cocoa.ObjcSendNSRectRect(w.platform.object, sel_convertRectToScreen, viewFrame)
 	// Match NSMouseInRect(point, rect, NO) behavior for non-flipped coordinates:
 	// x >= origin.x && x < maxX && y > origin.y && y <= maxY
 	return pos.X >= screenRect.Origin.X &&
@@ -1636,25 +1640,25 @@ func (w *Window) platformFramebufferTransparent() bool {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	return !objc.Send[bool](w.platform.object, objc.RegisterName("isOpaque")) &&
-		!objc.Send[bool](w.platform.view, objc.RegisterName("isOpaque"))
+	return cocoa.ObjcSend0(w.platform.object, objc.RegisterName("isOpaque")) == 0 &&
+		cocoa.ObjcSend0(w.platform.view, objc.RegisterName("isOpaque")) == 0
 }
 
 func (w *Window) platformSetWindowResizable(enabled bool) error {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	mask := uintptr(w.platform.object.Send(objc.RegisterName("styleMask")))
+	mask := cocoa.ObjcSend0(w.platform.object, objc.RegisterName("styleMask"))
 	if enabled {
 		mask |= NSWindowStyleMaskResizable
 	} else {
 		mask &^= NSWindowStyleMaskResizable
 	}
-	w.platform.object.Send(objc.RegisterName("setStyleMask:"), mask)
+	cocoa.ObjcSend1(w.platform.object, objc.RegisterName("setStyleMask:"), mask)
 	if enabled {
-		w.platform.object.Send(sel_setCollectionBehavior, uintptr(_NSWindowCollectionBehaviorFullScreenPrimary|_NSWindowCollectionBehaviorManaged))
+		cocoa.ObjcSend1(w.platform.object, sel_setCollectionBehavior, uintptr(_NSWindowCollectionBehaviorFullScreenPrimary|_NSWindowCollectionBehaviorManaged))
 	} else {
-		w.platform.object.Send(sel_setCollectionBehavior, uintptr(_NSWindowCollectionBehaviorFullScreenNone))
+		cocoa.ObjcSend1(w.platform.object, sel_setCollectionBehavior, uintptr(_NSWindowCollectionBehaviorFullScreenNone))
 	}
 	return nil
 }
@@ -1663,7 +1667,7 @@ func (w *Window) platformSetWindowDecorated(enabled bool) error {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	mask := uintptr(w.platform.object.Send(sel_styleMask))
+	mask := cocoa.ObjcSend0(w.platform.object, sel_styleMask)
 	if enabled {
 		mask |= NSWindowStyleMaskTitled | NSWindowStyleMaskClosable
 		mask &^= NSWindowStyleMaskBorderless
@@ -1671,8 +1675,8 @@ func (w *Window) platformSetWindowDecorated(enabled bool) error {
 		mask |= NSWindowStyleMaskBorderless
 		mask &^= (NSWindowStyleMaskTitled | NSWindowStyleMaskClosable)
 	}
-	w.platform.object.Send(sel_setStyleMask, mask)
-	w.platform.object.Send(sel_makeFirstResponder, w.platform.view)
+	cocoa.ObjcSend1(w.platform.object, sel_setStyleMask, mask)
+	cocoa.ObjcSend1(w.platform.object, sel_makeFirstResponder, uintptr(w.platform.view))
 	return nil
 }
 
@@ -1681,9 +1685,9 @@ func (w *Window) platformSetWindowFloating(enabled bool) error {
 	defer pool.Release()
 
 	if enabled {
-		w.platform.object.Send(sel_setLevel, uintptr(NSFloatingWindowLevel))
+		cocoa.ObjcSend1(w.platform.object, sel_setLevel, uintptr(NSFloatingWindowLevel))
 	} else {
-		w.platform.object.Send(sel_setLevel, uintptr(NSNormalWindowLevel))
+		cocoa.ObjcSend1(w.platform.object, sel_setLevel, uintptr(NSNormalWindowLevel))
 	}
 	return nil
 }
@@ -1692,7 +1696,7 @@ func (w *Window) platformSetWindowMousePassthrough(enabled bool) error {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	w.platform.object.Send(sel_setIgnoresMouseEvents, enabled)
+	cocoa.ObjcSend1(w.platform.object, sel_setIgnoresMouseEvents, cocoa.BoolToUintptr(enabled))
 	return nil
 }
 
@@ -1700,14 +1704,14 @@ func (w *Window) platformGetWindowOpacity() (float32, error) {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	return float32(objc.Send[float64](w.platform.object, sel_alphaValue)), nil
+	return float32(cocoa.ObjcSendFloat64(w.platform.object, sel_alphaValue)), nil
 }
 
 func (w *Window) platformSetWindowOpacity(opacity float32) error {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	w.platform.object.Send(sel_setAlphaValue, float64(opacity))
+	cocoa.ObjcSendFloat64Arg(w.platform.object, sel_setAlphaValue, float64(opacity))
 	return nil
 }
 
@@ -1722,17 +1726,17 @@ func platformPollEvents() error {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	distantPast := objc.ID(objc.GetClass("NSDate")).Send(objc.RegisterName("distantPast"))
+	distantPast := objc.ID(cocoa.ObjcSend0(objc.ID(objc.GetClass("NSDate")), objc.RegisterName("distantPast")))
 	for {
-		event := objc.Send[objc.ID](nsApp(), sel_nextEventMatchingMask_untilDate_inMode_dequeue,
+		event := objc.ID(cocoa.ObjcSend4(nsApp(), sel_nextEventMatchingMask_untilDate_inMode_dequeue,
 			uintptr(NSEventMaskAny),
-			distantPast,
-			nsDefaultRunLoopMode.ID,
-			true)
+			uintptr(distantPast),
+			uintptr(nsDefaultRunLoopMode.ID),
+			uintptr(1)))
 		if event == 0 {
 			break
 		}
-		nsApp().Send(sel_sendEvent, event)
+		cocoa.ObjcSend1(nsApp(), sel_sendEvent, uintptr(event))
 	}
 	return nil
 }
@@ -1742,14 +1746,14 @@ func platformWaitEvents() error {
 	defer pool.Release()
 
 	// Wait for an event with no timeout (distantFuture).
-	distantFuture := objc.ID(objc.GetClass("NSDate")).Send(objc.RegisterName("distantFuture"))
-	event := objc.Send[objc.ID](nsApp(), sel_nextEventMatchingMask_untilDate_inMode_dequeue,
+	distantFuture := objc.ID(cocoa.ObjcSend0(objc.ID(objc.GetClass("NSDate")), objc.RegisterName("distantFuture")))
+	event := objc.ID(cocoa.ObjcSend4(nsApp(), sel_nextEventMatchingMask_untilDate_inMode_dequeue,
 		uintptr(NSEventMaskAny),
-		distantFuture,
-		nsDefaultRunLoopMode.ID,
-		true)
+		uintptr(distantFuture),
+		uintptr(nsDefaultRunLoopMode.ID),
+		uintptr(1)))
 	if event != 0 {
-		nsApp().Send(sel_sendEvent, event)
+		cocoa.ObjcSend1(nsApp(), sel_sendEvent, uintptr(event))
 	}
 
 	if err := platformPollEvents(); err != nil {
@@ -1763,14 +1767,14 @@ func platformWaitEventsTimeout(timeout float64) error {
 	defer pool.Release()
 
 	// Create an NSDate for the timeout.
-	date := objc.ID(objc.GetClass("NSDate")).Send(objc.RegisterName("dateWithTimeIntervalSinceNow:"), timeout)
-	event := objc.Send[objc.ID](nsApp(), sel_nextEventMatchingMask_untilDate_inMode_dequeue,
+	date := objc.ID(cocoa.ObjcSendFloat64ArgRet(objc.ID(objc.GetClass("NSDate")), objc.RegisterName("dateWithTimeIntervalSinceNow:"), timeout))
+	event := objc.ID(cocoa.ObjcSend4(nsApp(), sel_nextEventMatchingMask_untilDate_inMode_dequeue,
 		uintptr(NSEventMaskAny),
-		date,
-		nsDefaultRunLoopMode.ID,
-		true)
+		uintptr(date),
+		uintptr(nsDefaultRunLoopMode.ID),
+		uintptr(1)))
 	if event != 0 {
-		nsApp().Send(sel_sendEvent, event)
+		cocoa.ObjcSend1(nsApp(), sel_sendEvent, uintptr(event))
 	}
 
 	if err := platformPollEvents(); err != nil {
@@ -1799,9 +1803,9 @@ func (w *Window) platformGetCursorPos() (xpos, ypos float64, err error) {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	contentRect := objc.Send[cocoa.NSRect](w.platform.view, sel_frame)
+	contentRect := cocoa.ObjcSendNSRect(w.platform.view, sel_frame)
 	// NOTE: The returned location uses base 0,1 not 0,0
-	pos := objc.Send[cocoa.NSPoint](w.platform.object, sel_mouseLocationOutsideOfEventStream)
+	pos := cocoa.ObjcSendNSPoint(w.platform.object, sel_mouseLocationOutsideOfEventStream)
 
 	xpos = pos.X
 	ypos = contentRect.Size.Height - pos.Y
@@ -1815,9 +1819,9 @@ func (w *Window) platformSetCursorPos(xpos, ypos float64) error {
 
 	updateCursorImage(w)
 
-	contentRect := objc.Send[cocoa.NSRect](w.platform.view, sel_frame)
+	contentRect := cocoa.ObjcSendNSRect(w.platform.view, sel_frame)
 	// NOTE: The returned location uses base 0,1 not 0,0
-	pos := objc.Send[cocoa.NSPoint](w.platform.object, sel_mouseLocationOutsideOfEventStream)
+	pos := cocoa.ObjcSendNSPoint(w.platform.object, sel_mouseLocationOutsideOfEventStream)
 
 	w.platform.cursorWarpDeltaX += xpos - pos.X
 	w.platform.cursorWarpDeltaY += ypos - contentRect.Size.Height + pos.Y
@@ -1829,7 +1833,7 @@ func (w *Window) platformSetCursorPos(xpos, ypos float64) error {
 			Origin: cocoa.NSPoint{X: xpos, Y: contentRect.Size.Height - ypos - 1},
 			Size:   cocoa.NSSize{Width: 0, Height: 0},
 		}
-		globalRect := objc.Send[cocoa.NSRect](w.platform.object, sel_convertRectToScreen, localRect)
+		globalRect := cocoa.ObjcSendNSRectRect(w.platform.object, sel_convertRectToScreen, localRect)
 		globalPoint := globalRect.Origin
 
 		cgWarpMouseCursorPosition(cocoa.CGPoint{
@@ -1868,7 +1872,8 @@ func (c *Cursor) platformCreateCursor(img *image.NRGBA, xhot, yhot int) error {
 	w := b.Dx()
 	h := b.Dy()
 
-	rep := objc.ID(class_NSBitmapImageRep).Send(sel_alloc).Send(sel_initWithBitmapDataPlanes_pixelsWide_pixelsHigh_bitsPerSample_samplesPerPixel_hasAlpha_isPlanar_colorSpaceName_bitmapFormat_bytesPerRow_bitsPerPixel,
+	repAlloc := objc.ID(cocoa.ObjcSend0(objc.ID(class_NSBitmapImageRep), sel_alloc))
+	rep := repAlloc.Send(sel_initWithBitmapDataPlanes_pixelsWide_pixelsHigh_bitsPerSample_samplesPerPixel_hasAlpha_isPlanar_colorSpaceName_bitmapFormat_bytesPerRow_bitsPerPixel,
 		uintptr(0),                   // planes (NULL = allocate)
 		uintptr(w),                   // pixelsWide
 		uintptr(h),                   // pixelsHigh
@@ -1887,7 +1892,7 @@ func (c *Cursor) platformCreateCursor(img *image.NRGBA, xhot, yhot int) error {
 
 	// Copy pixel data into the bitmap row by row to honor the image's stride
 	// and non-zero origin.
-	bitmapData := rep.Send(sel_bitmapData)
+	bitmapData := cocoa.ObjcSend0(rep, sel_bitmapData)
 	if bitmapData != 0 {
 		dst := unsafe.Slice((*byte)(unsafe.Pointer(bitmapData)), w*h*4)
 		for y := range h {
@@ -1896,17 +1901,19 @@ func (c *Cursor) platformCreateCursor(img *image.NRGBA, xhot, yhot int) error {
 		}
 	}
 
-	native := objc.ID(class_NSImage).Send(sel_alloc).Send(sel_initWithSize,
-		cocoa.CGSize{Width: float64(w), Height: float64(h)})
-	native.Send(sel_addRepresentation, rep)
+	nativeAlloc := objc.ID(cocoa.ObjcSend0(objc.ID(class_NSImage), sel_alloc))
+	native := objc.ID(cocoa.ObjcSendSizeRet(nativeAlloc, sel_initWithSize,
+		cocoa.CGSize{Width: float64(w), Height: float64(h)}))
+	cocoa.ObjcSend1(native, sel_addRepresentation, uintptr(rep))
 
-	cursor := objc.ID(class_NSCursor).Send(sel_alloc).Send(
+	cursorAlloc := objc.ID(cocoa.ObjcSend0(objc.ID(class_NSCursor), sel_alloc))
+	cursor := objc.ID(cocoa.ObjcSendIDPoint(cursorAlloc,
 		sel_initWithImage_hotSpot,
 		native,
-		cocoa.NSPoint{X: float64(xhot), Y: float64(yhot)})
+		cocoa.NSPoint{X: float64(xhot), Y: float64(yhot)}))
 
-	native.Send(sel_release)
-	rep.Send(sel_release)
+	cocoa.ObjcSend0(native, sel_release)
+	cocoa.ObjcSend0(rep, sel_release)
 
 	if cursor == 0 {
 		return fmt.Errorf("glfw: failed to create custom cursor: %w", PlatformError)
@@ -1934,9 +1941,9 @@ func (c *Cursor) platformCreateStandardCursor(shape StandardCursor) error {
 	}
 
 	var cursor objc.ID
-	if cursorSelector != 0 && objc.Send[bool](objc.ID(class_NSCursor), sel_respondsToSelector, cursorSelector) {
-		id := objc.ID(class_NSCursor).Send(sel_performSelector, cursorSelector)
-		if id != 0 && objc.Send[bool](id, sel_isKindOfClass, objc.ID(class_NSCursor)) {
+	if cursorSelector != 0 && cocoa.ObjcSend1(objc.ID(class_NSCursor), sel_respondsToSelector, uintptr(cursorSelector)) != 0 {
+		id := objc.ID(cocoa.ObjcSend1(objc.ID(class_NSCursor), sel_performSelector, uintptr(cursorSelector)))
+		if id != 0 && cocoa.ObjcSend1(id, sel_isKindOfClass, uintptr(class_NSCursor)) != 0 {
 			cursor = id
 		}
 	}
@@ -1944,45 +1951,47 @@ func (c *Cursor) platformCreateStandardCursor(shape StandardCursor) error {
 	if cursor == 0 {
 		switch shape {
 		case ArrowCursor:
-			cursor = objc.ID(class_NSCursor).Send(sel_arrowCursor)
+			cursor = objc.ID(cocoa.ObjcSend0(objc.ID(class_NSCursor), sel_arrowCursor))
 		case IBeamCursor:
-			cursor = objc.ID(class_NSCursor).Send(sel_IBeamCursor)
+			cursor = objc.ID(cocoa.ObjcSend0(objc.ID(class_NSCursor), sel_IBeamCursor))
 		case CrosshairCursor:
-			cursor = objc.ID(class_NSCursor).Send(sel_crosshairCursor)
+			cursor = objc.ID(cocoa.ObjcSend0(objc.ID(class_NSCursor), sel_crosshairCursor))
 		case HandCursor:
-			cursor = objc.ID(class_NSCursor).Send(sel_pointingHandCursor)
+			cursor = objc.ID(cocoa.ObjcSend0(objc.ID(class_NSCursor), sel_pointingHandCursor))
 		case ResizeAllCursor:
 			// Use the OS's resource: https://stackoverflow.com/a/21786835/5435443
 			cursorName := cocoa.NSString_alloc().InitWithUTF8String("move")
 			basePath := cocoa.NSString_alloc().InitWithUTF8String("/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/HIServices.framework/Versions/A/Resources/cursors")
-			cursorPath := cocoa.NSString{ID: basePath.ID.Send(sel_stringByAppendingPathComponent, cursorName.ID)}
-			cursorName.ID.Send(sel_release)
-			basePath.ID.Send(sel_release)
+			cursorPath := cocoa.NSString{ID: objc.ID(cocoa.ObjcSend1(basePath.ID, sel_stringByAppendingPathComponent, uintptr(cursorName.ID)))}
+			cocoa.ObjcSend0(cursorName.ID, sel_release)
+			cocoa.ObjcSend0(basePath.ID, sel_release)
 			cursorPDF := cocoa.NSString_alloc().InitWithUTF8String("cursor.pdf")
-			imagePath := cocoa.NSString{ID: cursorPath.ID.Send(sel_stringByAppendingPathComponent, cursorPDF.ID)}
-			cursorPDF.ID.Send(sel_release)
+			imagePath := cocoa.NSString{ID: objc.ID(cocoa.ObjcSend1(cursorPath.ID, sel_stringByAppendingPathComponent, uintptr(cursorPDF.ID)))}
+			cocoa.ObjcSend0(cursorPDF.ID, sel_release)
 			infoPlist := cocoa.NSString_alloc().InitWithUTF8String("info.plist")
-			infoPath := cocoa.NSString{ID: cursorPath.ID.Send(sel_stringByAppendingPathComponent, infoPlist.ID)}
-			infoPlist.ID.Send(sel_release)
-			image := objc.ID(class_NSImage).Send(sel_alloc).Send(sel_initByReferencingFile, imagePath.ID)
-			info := objc.ID(class_NSDictionary).Send(sel_dictionaryWithContentsOfFile, infoPath.ID)
+			infoPath := cocoa.NSString{ID: objc.ID(cocoa.ObjcSend1(cursorPath.ID, sel_stringByAppendingPathComponent, uintptr(infoPlist.ID)))}
+			cocoa.ObjcSend0(infoPlist.ID, sel_release)
+			imageAlloc := objc.ID(cocoa.ObjcSend0(objc.ID(class_NSImage), sel_alloc))
+			image := objc.ID(cocoa.ObjcSend1(imageAlloc, sel_initByReferencingFile, uintptr(imagePath.ID)))
+			info := objc.ID(cocoa.ObjcSend1(objc.ID(class_NSDictionary), sel_dictionaryWithContentsOfFile, uintptr(infoPath.ID)))
 			if image != 0 && info != 0 {
 				hotxKey := cocoa.NSString_alloc().InitWithUTF8String("hotx")
-				hotx := objc.Send[float64](info.Send(sel_valueForKey, hotxKey.ID), sel_doubleValue)
-				hotxKey.ID.Send(sel_release)
+				hotx := cocoa.ObjcSendFloat64(objc.ID(cocoa.ObjcSend1(info, sel_valueForKey, uintptr(hotxKey.ID))), sel_doubleValue)
+				cocoa.ObjcSend0(hotxKey.ID, sel_release)
 				hotyKey := cocoa.NSString_alloc().InitWithUTF8String("hoty")
-				hoty := objc.Send[float64](info.Send(sel_valueForKey, hotyKey.ID), sel_doubleValue)
-				hotyKey.ID.Send(sel_release)
+				hoty := cocoa.ObjcSendFloat64(objc.ID(cocoa.ObjcSend1(info, sel_valueForKey, uintptr(hotyKey.ID))), sel_doubleValue)
+				cocoa.ObjcSend0(hotyKey.ID, sel_release)
 				// alloc/init returns an owned object. Autorelease it so that the retain
 				// below leaves exactly one owned reference.
-				cursor = objc.ID(class_NSCursor).Send(sel_alloc).Send(sel_initWithImage_hotSpot, image, cocoa.NSPoint{X: hotx, Y: hoty})
-				cursor.Send(sel_autorelease)
+				cursorAlloc := objc.ID(cocoa.ObjcSend0(objc.ID(class_NSCursor), sel_alloc))
+				cursor = objc.ID(cocoa.ObjcSendIDPoint(cursorAlloc, sel_initWithImage_hotSpot, image, cocoa.NSPoint{X: hotx, Y: hoty}))
+				cocoa.ObjcSend0(cursor, sel_autorelease)
 			}
 			if image != 0 {
-				image.Send(sel_release)
+				cocoa.ObjcSend0(image, sel_release)
 			}
 		case NotAllowedCursor:
-			cursor = objc.ID(class_NSCursor).Send(sel_operationNotAllowedCursor)
+			cursor = objc.ID(cocoa.ObjcSend0(objc.ID(class_NSCursor), sel_operationNotAllowedCursor))
 		}
 	}
 
@@ -1990,7 +1999,7 @@ func (c *Cursor) platformCreateStandardCursor(shape StandardCursor) error {
 		return fmt.Errorf("glfw: failed to create standard cursor: %w", PlatformError)
 	}
 
-	cursor.Send(sel_retain)
+	cocoa.ObjcSend0(cursor, sel_retain)
 	c.platform.object = cursor
 	return nil
 }
@@ -2000,7 +2009,7 @@ func (c *Cursor) platformDestroyCursor() error {
 	defer pool.Release()
 
 	if c.platform.object != 0 {
-		c.platform.object.Send(sel_release)
+		cocoa.ObjcSend0(c.platform.object, sel_release)
 		c.platform.object = 0
 	}
 	return nil
@@ -2022,14 +2031,14 @@ func platformSetClipboardString(str string) error {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	pasteboard := objc.ID(class_NSPasteboard).Send(sel_generalPasteboard)
-	types := objc.ID(class_NSArray).Send(sel_arrayWithObject, nsPasteboardTypeString.ID)
-	pasteboard.Send(sel_declareTypes_owner, types, 0)
+	pasteboard := objc.ID(cocoa.ObjcSend0(objc.ID(class_NSPasteboard), sel_generalPasteboard))
+	types := objc.ID(cocoa.ObjcSend1(objc.ID(class_NSArray), sel_arrayWithObject, uintptr(nsPasteboardTypeString.ID)))
+	cocoa.ObjcSend2(pasteboard, sel_declareTypes_owner, uintptr(types), 0)
 	clipStr := cocoa.NSString_alloc().InitWithUTF8String(str)
-	pasteboard.Send(sel_setString_forType,
-		clipStr.ID,
-		nsPasteboardTypeString.ID)
-	clipStr.ID.Send(sel_release)
+	cocoa.ObjcSend2(pasteboard, sel_setString_forType,
+		uintptr(clipStr.ID),
+		uintptr(nsPasteboardTypeString.ID))
+	cocoa.ObjcSend0(clipStr.ID, sel_release)
 	return nil
 }
 
@@ -2037,14 +2046,14 @@ func platformGetClipboardString() (string, error) {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	pasteboard := objc.ID(class_NSPasteboard).Send(sel_generalPasteboard)
+	pasteboard := objc.ID(cocoa.ObjcSend0(objc.ID(class_NSPasteboard), sel_generalPasteboard))
 
-	types := pasteboard.Send(sel_types)
-	if objc.Send[bool](types, sel_containsObject, nsPasteboardTypeString.ID) == false {
+	types := objc.ID(cocoa.ObjcSend0(pasteboard, sel_types))
+	if cocoa.ObjcSend1(types, sel_containsObject, uintptr(nsPasteboardTypeString.ID)) == 0 {
 		return "", fmt.Errorf("glfw: failed to retrieve string from pasteboard: %w", FormatUnavailable)
 	}
 
-	strID := pasteboard.Send(sel_stringForType, nsPasteboardTypeString.ID)
+	strID := objc.ID(cocoa.ObjcSend1(pasteboard, sel_stringForType, uintptr(nsPasteboardTypeString.ID)))
 	if strID == 0 {
 		return "", fmt.Errorf("glfw: failed to retrieve object from pasteboard: %w", PlatformError)
 	}
@@ -2148,7 +2157,7 @@ func (w *Window) acquireMonitor() error {
 		},
 		Size: cocoa.NSSize{Width: bounds.Width, Height: bounds.Height},
 	}
-	w.platform.object.Send(objc.RegisterName("setFrame:display:"), frame, true)
+	cocoa.ObjcSendRectBool(w.platform.object, objc.RegisterName("setFrame:display:"), frame, true)
 
 	w.monitor.inputMonitorWindow(w)
 	return nil
