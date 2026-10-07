@@ -917,7 +917,13 @@ func (cb CommandBuffer) RenderCommandEncoderWithDescriptor(rpd RenderPassDescrip
 	objcSend1(colorAttachments0, sel_setLoadAction, uintptr(rpd.ColorAttachments[0].LoadAction))
 	objcSend1(colorAttachments0, sel_setStoreAction, uintptr(rpd.ColorAttachments[0].StoreAction))
 	objcSend1(colorAttachments0, sel_setTexture, uintptr(rpd.ColorAttachments[0].Texture.texture))
-	colorAttachments0.Send(sel_setClearColor, rpd.ColorAttachments[0].ClearColor)
+	if runtime.GOARCH == "arm64" {
+		// MTLClearColor is an HFA of 4 doubles, passed in d0-d3 on arm64.
+		c := rpd.ColorAttachments[0].ClearColor
+		cocoa.ObjcSendFloat4(colorAttachments0, sel_setClearColor, c.Red, c.Green, c.Blue, c.Alpha)
+	} else {
+		colorAttachments0.Send(sel_setClearColor, rpd.ColorAttachments[0].ClearColor)
+	}
 	var stencilAttachment = objc.ID(objcSend0(renderPassDescriptor, sel_stencilAttachment))
 	objcSend1(stencilAttachment, sel_setLoadAction, uintptr(rpd.StencilAttachment.LoadAction))
 	objcSend1(stencilAttachment, sel_setStoreAction, uintptr(rpd.StencilAttachment.StoreAction))

@@ -1722,11 +1722,17 @@ func (w *Window) platformSetRawMouseMotion(enabled bool) error {
 
 // --- Event polling ---
 
+var (
+	class_NSDate      = objc.GetClass("NSDate")
+	sel_distantPast   = objc.RegisterName("distantPast")
+	sel_distantFuture = objc.RegisterName("distantFuture")
+)
+
 func platformPollEvents() error {
 	pool := cocoa.NSAutoreleasePool_new()
 	defer pool.Release()
 
-	distantPast := objc.ID(cocoa.ObjcSend0(objc.ID(objc.GetClass("NSDate")), objc.RegisterName("distantPast")))
+	distantPast := objc.ID(cocoa.ObjcSend0(objc.ID(class_NSDate), sel_distantPast))
 	for {
 		event := objc.ID(cocoa.ObjcSend4(nsApp(), sel_nextEventMatchingMask_untilDate_inMode_dequeue,
 			uintptr(NSEventMaskAny),
@@ -1746,7 +1752,7 @@ func platformWaitEvents() error {
 	defer pool.Release()
 
 	// Wait for an event with no timeout (distantFuture).
-	distantFuture := objc.ID(cocoa.ObjcSend0(objc.ID(objc.GetClass("NSDate")), objc.RegisterName("distantFuture")))
+	distantFuture := objc.ID(cocoa.ObjcSend0(objc.ID(class_NSDate), sel_distantFuture))
 	event := objc.ID(cocoa.ObjcSend4(nsApp(), sel_nextEventMatchingMask_untilDate_inMode_dequeue,
 		uintptr(NSEventMaskAny),
 		uintptr(distantFuture),
