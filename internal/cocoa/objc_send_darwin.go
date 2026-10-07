@@ -16,6 +16,7 @@ package cocoa
 
 import (
 	"math"
+	"runtime"
 
 	"github.com/ebitengine/purego"
 	"github.com/ebitengine/purego/objc"
@@ -90,12 +91,21 @@ func ObjcSendNSPoint(id objc.ID, sel objc.SEL) NSPoint {
 }
 
 func ObjcSendNSRect(id objc.ID, sel objc.SEL) NSRect {
+	if !rectInFloatRegs {
+		return objc.Send[NSRect](id, sel)
+	}
 	var intArgs, floatArgs [8]uintptr
 	intArgs[0] = uintptr(id)
 	intArgs[1] = uintptr(sel)
 	_, f1, f2, f3, f4 := purego.SyscallNMixed(ObjcMsgSend, &intArgs, &floatArgs)
 	return rectFromFloats(f1, f2, f3, f4)
 }
+
+// rectInFloatRegs reports whether an NSRect (four float64s, 32 bytes) is passed and
+// returned in float registers. That holds for arm64 (HFA in d0-d3) but not amd64,
+// where a struct over 16 bytes goes through memory; there the NSRect helpers fall
+// back to objc.Send, which is correct but allocates.
+const rectInFloatRegs = runtime.GOARCH == "arm64"
 
 func rectFromFloats(f1, f2, f3, f4 uintptr) NSRect {
 	return NSRect{
@@ -113,6 +123,9 @@ func rectToFloats(r NSRect) (f0, f1, f2, f3 uintptr) {
 
 // ObjcSendNSRectRect returns NSRect from a method that takes an NSRect arg.
 func ObjcSendNSRectRect(id objc.ID, sel objc.SEL, r NSRect) NSRect {
+	if !rectInFloatRegs {
+		return objc.Send[NSRect](id, sel, r)
+	}
 	var intArgs, floatArgs [8]uintptr
 	intArgs[0] = uintptr(id)
 	intArgs[1] = uintptr(sel)
@@ -125,6 +138,9 @@ func ObjcSendNSRectRect(id objc.ID, sel objc.SEL, r NSRect) NSRect {
 //
 //go:uintptrescapes
 func ObjcSendNSRectRectInt(id objc.ID, sel objc.SEL, r NSRect, a0 uintptr) NSRect {
+	if !rectInFloatRegs {
+		return objc.Send[NSRect](id, sel, r, a0)
+	}
 	var intArgs, floatArgs [8]uintptr
 	intArgs[0] = uintptr(id)
 	intArgs[1] = uintptr(sel)
@@ -150,6 +166,9 @@ func ObjcSendNSPointPoint(id objc.ID, sel objc.SEL, p NSPoint) NSPoint {
 
 // ObjcSendBoolPointRect returns bool from a method with NSPoint + NSRect args.
 func ObjcSendBoolPointRect(id objc.ID, sel objc.SEL, p NSPoint, r NSRect) bool {
+	if !rectInFloatRegs {
+		return objc.Send[bool](id, sel, p, r)
+	}
 	var intArgs, floatArgs [8]uintptr
 	intArgs[0] = uintptr(id)
 	intArgs[1] = uintptr(sel)
@@ -204,6 +223,10 @@ func ObjcSendFloat64ArgRet(id objc.ID, sel objc.SEL, f float64) uintptr {
 
 // ObjcSendRectBool calls a method with NSRect + bool args (e.g. setFrame:display:).
 func ObjcSendRectBool(id objc.ID, sel objc.SEL, r NSRect, b bool) {
+	if !rectInFloatRegs {
+		id.Send(sel, r, b)
+		return
+	}
 	var intArgs, floatArgs [8]uintptr
 	intArgs[0] = uintptr(id)
 	intArgs[1] = uintptr(sel)
@@ -218,6 +241,9 @@ func ObjcSendRectBool(id objc.ID, sel objc.SEL, r NSRect, b bool) {
 //
 //go:uintptrescapes
 func ObjcSendRectIntIntBool(id objc.ID, sel objc.SEL, r NSRect, a0, a1 uintptr, b bool) uintptr {
+	if !rectInFloatRegs {
+		return uintptr(id.Send(sel, r, a0, a1, b))
+	}
 	var intArgs, floatArgs [8]uintptr
 	intArgs[0] = uintptr(id)
 	intArgs[1] = uintptr(sel)
@@ -249,6 +275,9 @@ func ObjcSendIntPointInt(id objc.ID, sel objc.SEL, p NSPoint, a0 uintptr) uintpt
 //
 //go:uintptrescapes
 func ObjcSendRectIntIDInt(id objc.ID, sel objc.SEL, r NSRect, a0 uintptr, a1 objc.ID, a2 uintptr) uintptr {
+	if !rectInFloatRegs {
+		return uintptr(id.Send(sel, r, a0, a1, a2))
+	}
 	var intArgs, floatArgs [8]uintptr
 	intArgs[0] = uintptr(id)
 	intArgs[1] = uintptr(sel)

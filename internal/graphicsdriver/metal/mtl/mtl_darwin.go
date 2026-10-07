@@ -981,7 +981,11 @@ func (rce RenderCommandEncoder) SetRenderPipelineState(rps RenderPipelineState) 
 }
 
 func (rce RenderCommandEncoder) SetViewport(viewport Viewport) {
-	// Viewport is 48 bytes (> 16) — ARM64 ABI passes by pointer
+	// Structs over 16 bytes are passed by pointer on arm64 but copied onto the stack on amd64.
+	if runtime.GOARCH != "arm64" {
+		rce.commandEncoder.Send(sel_setViewport, viewport)
+		return
+	}
 	objcSend1(rce.commandEncoder, sel_setViewport, uintptr(unsafe.Pointer(&viewport)))
 }
 
@@ -989,7 +993,11 @@ func (rce RenderCommandEncoder) SetViewport(viewport Viewport) {
 //
 // Reference: https://developer.apple.com/documentation/metal/mtlrendercommandencoder/1515583-setscissorrect?language=objc.
 func (rce RenderCommandEncoder) SetScissorRect(scissorRect ScissorRect) {
-	// ScissorRect is 32 bytes (> 16) — ARM64 ABI passes by pointer
+	// Structs over 16 bytes are passed by pointer on arm64 but copied onto the stack on amd64.
+	if runtime.GOARCH != "arm64" {
+		rce.commandEncoder.Send(sel_setScissorRect, scissorRect)
+		return
+	}
 	objcSend1(rce.commandEncoder, sel_setScissorRect, uintptr(unsafe.Pointer(&scissorRect)))
 }
 
