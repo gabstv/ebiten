@@ -250,7 +250,7 @@ func initLibX11() error {
 	purego.RegisterLibFunc(&xDisplayKeycodes, lib, "XDisplayKeycodes")
 	purego.RegisterLibFunc(&xEventsQueued, lib, "XEventsQueued")
 	purego.RegisterLibFunc(&xFilterEvent, lib, "XFilterEvent")
-	purego.RegisterLibFunc(&xFlush, lib, "XFlush")
+	xFlush = displayFunc(lib, "XFlush")
 	purego.RegisterLibFunc(&xFree, lib, "XFree")
 	purego.RegisterLibFunc(&xFreeColormap, lib, "XFreeColormap")
 	purego.RegisterLibFunc(&xFreeCursor, lib, "XFreeCursor")
@@ -280,10 +280,10 @@ func initLibX11() error {
 	purego.RegisterLibFunc(&xOpenDisplay, lib, "XOpenDisplay")
 	purego.RegisterLibFunc(&xOpenIM, lib, "XOpenIM")
 	purego.RegisterLibFunc(&xPeekEvent, lib, "XPeekEvent")
-	purego.RegisterLibFunc(&xPending, lib, "XPending")
-	purego.RegisterLibFunc(&xQLength, lib, "XQLength")
+	xPending = displayFunc(lib, "XPending")
+	xQLength = displayFunc(lib, "XQLength")
 	purego.RegisterLibFunc(&xQueryExtension, lib, "XQueryExtension")
-	purego.RegisterLibFunc(&xQueryPointer, lib, "XQueryPointer")
+	xQueryPointer = queryPointerFunc(lib)
 	purego.RegisterLibFunc(&xRaiseWindow, lib, "XRaiseWindow")
 	purego.RegisterLibFunc(&xResizeWindow, lib, "XResizeWindow")
 	purego.RegisterLibFunc(&xResourceManagerString, lib, "XResourceManagerString")
@@ -367,4 +367,43 @@ func goString(p uintptr) string {
 		n++
 	}
 	return string(unsafe.Slice((*byte)(unsafe.Pointer(p)), n))
+}
+
+// The functions below call C functions that run every frame through purego's fixed-arity
+// Syscall functions, which do not allocate, unlike the functions RegisterLibFunc makes.
+
+// mustDlsym returns the address of the C function name in lib, and panics if it is
+// missing, like purego.RegisterLibFunc.
+func mustDlsym(lib uintptr, name string) uintptr {
+	sym, err := purego.Dlsym(lib, name)
+	if err != nil {
+		panic(err)
+	}
+	return sym
+}
+
+// displayFunc returns a function that calls the C function name, which takes a Display*
+// and returns an int.
+func displayFunc(lib uintptr, name string) func(display uintptr) int32 {
+	sym := mustDlsym(lib, name)
+	return func(display uintptr) int32 {
+		r, _, _ := purego.Syscall1(sym, display)
+		return int32(r)
+	}
+}
+
+// queryPointerFunc returns a function that calls XQueryPointer. The variables its pointer
+// arguments point to move to the heap, so callers that run often pass fields of a heap
+// object instead of local variables.
+func queryPointerFunc(lib uintptr) func(display uintptr, w _XID, rootReturn, childReturn *_XID, rootXReturn, rootYReturn, winXReturn, winYReturn *int32, maskReturn *uint32) bool {
+	sym := mustDlsym(lib, "XQueryPointer")
+	return func(display uintptr, w _XID, rootReturn, childReturn *_XID, rootXReturn, rootYReturn, winXReturn, winYReturn *int32, maskReturn *uint32) bool {
+		r, _, _ := purego.Syscall9(sym, display, uintptr(w),
+			uintptr(unsafe.Pointer(rootReturn)), uintptr(unsafe.Pointer(childReturn)),
+			uintptr(unsafe.Pointer(rootXReturn)), uintptr(unsafe.Pointer(rootYReturn)),
+			uintptr(unsafe.Pointer(winXReturn)), uintptr(unsafe.Pointer(winYReturn)),
+			uintptr(unsafe.Pointer(maskReturn)))
+		// XQueryPointer returns a Bool, which is an int.
+		return int32(r) != 0
+	}
 }

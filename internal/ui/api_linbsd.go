@@ -89,12 +89,31 @@ func loadX11() {
 	if err != nil {
 		return
 	}
-	purego.RegisterLibFunc(&xDefaultScreen, lib, "XDefaultScreen")
-	purego.RegisterLibFunc(&xRootWindow, lib, "XRootWindow")
+	// x11QueryPointer runs every frame, so the functions it calls call C through purego's
+	// fixed-arity Syscall functions, which do not allocate, unlike the functions RegisterLibFunc makes.
+	defaultScreen := mustDlsym(lib, "XDefaultScreen")
+	xDefaultScreen = func(display uintptr) int32 {
+		r, _, _ := purego.Syscall1(defaultScreen, display)
+		return int32(r)
+	}
+	rootWindow := mustDlsym(lib, "XRootWindow")
+	xRootWindow = func(display uintptr, screen int32) xID {
+		r, _, _ := purego.Syscall2(rootWindow, display, uintptr(screen))
+		return xID(r)
+	}
 	purego.RegisterLibFunc(&xInternAtom, lib, "XInternAtom")
 	purego.RegisterLibFunc(&xChangeProperty, lib, "XChangeProperty")
 	purego.RegisterLibFunc(&xDeleteProperty, lib, "XDeleteProperty")
-	purego.RegisterLibFunc(&xQueryPointer, lib, "XQueryPointer")
+	queryPointer := mustDlsym(lib, "XQueryPointer")
+	xQueryPointer = func(display uintptr, w xID, rootReturn, childReturn *xID, rootXReturn, rootYReturn, winXReturn, winYReturn *int32, maskReturn *uint32) bool {
+		r, _, _ := purego.Syscall9(queryPointer, display, uintptr(w),
+			uintptr(unsafe.Pointer(rootReturn)), uintptr(unsafe.Pointer(childReturn)),
+			uintptr(unsafe.Pointer(rootXReturn)), uintptr(unsafe.Pointer(rootYReturn)),
+			uintptr(unsafe.Pointer(winXReturn)), uintptr(unsafe.Pointer(winYReturn)),
+			uintptr(unsafe.Pointer(maskReturn)))
+		// XQueryPointer returns a Bool, which is an int.
+		return int32(r) != 0
+	}
 	purego.RegisterLibFunc(&xFlush, lib, "XFlush")
 	x11Loaded = true
 
@@ -108,6 +127,16 @@ func loadX11() {
 	purego.RegisterLibFunc(&xrrFreeScreenResources, rlib, "XRRFreeScreenResources")
 	purego.RegisterLibFunc(&xrrFreeCrtcInfo, rlib, "XRRFreeCrtcInfo")
 	xrandrLoaded = true
+}
+
+// mustDlsym returns the address of the C function name in lib, and panics if it is
+// missing, like purego.RegisterLibFunc.
+func mustDlsym(lib uintptr, name string) uintptr {
+	sym, err := purego.Dlsym(lib, name)
+	if err != nil {
+		panic(err)
+	}
+	return sym
 }
 
 func openX11Library(names ...string) (uintptr, error) {
@@ -145,16 +174,28 @@ func x11RootWindow(display uintptr) xID {
 	return xRootWindow(display, xDefaultScreen(display))
 }
 
+// queryPointerResult receives the results of XQueryPointer in x11QueryPointer. It is a
+// package variable so that the variables XQueryPointer writes to do not move to the heap
+// on every call.
+var queryPointerResult x11QueryPointerResult
+
+type x11QueryPointerResult struct {
+	root, child              xID
+	rootX, rootY, winX, winY int32
+	mask                     uint32
+}
+
 // x11QueryPointer returns the cursor position relative to the root window, and
 // the modifier and button state mask. ok is false when the pointer is on
 // another screen.
+//
+// x11QueryPointer must be called on the main thread.
 func x11QueryPointer(display uintptr) (x, y int, mask uint32, ok bool) {
-	var (
-		rootReturn, childReturn  xID
-		rootX, rootY, winX, winY int32
-	)
-	if !xQueryPointer(display, x11RootWindow(display), &rootReturn, &childReturn, &rootX, &rootY, &winX, &winY, &mask) {
+	q := &queryPointerResult
+	// XQueryPointer may not write the results if it fails, so start from zero like local variables.
+	*q = x11QueryPointerResult{}
+	if !xQueryPointer(display, x11RootWindow(display), &q.root, &q.child, &q.rootX, &q.rootY, &q.winX, &q.winY, &q.mask) {
 		return 0, 0, 0, false
 	}
-	return int(rootX), int(rootY), mask, true
+	return int(q.rootX), int(q.rootY), q.mask, true
 }

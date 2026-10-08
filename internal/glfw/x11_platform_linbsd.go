@@ -23,6 +23,9 @@ type platformWindowState struct {
 	parent   _XID
 	ic       uintptr // XIC
 
+	// queryPointer receives the results of XQueryPointer. See queryPointer.
+	queryPointer queryPointerResult
+
 	// The composition the input method is currently showing, accumulated from
 	// the incremental preedit draw callbacks, the matching per-character
 	// feedback, and the caret offset within it in characters. All are zero
