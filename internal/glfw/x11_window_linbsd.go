@@ -2869,26 +2869,18 @@ func (w *Window) platformWindowMaximized() bool {
 func (w *Window) platformWindowHovered() (bool, error) {
 	window := _glfw.platformWindow.root
 	for window != 0 {
-		var root, child _XID
-		var rootX, rootY, childX, childY int32
-		var mask uint32
-
 		grabErrorHandlerX11()
-
-		result := xQueryPointer(_glfw.platformWindow.display, window,
-			&root, &child, &rootX, &rootY,
-			&childX, &childY, &mask)
-
+		q, result := w.queryPointer(window)
 		releaseErrorHandlerX11()
 
 		if _glfw.platformWindow.errorCode == _BadWindow {
 			window = _glfw.platformWindow.root
 		} else if !result {
 			return false, nil
-		} else if child == w.platform.handle {
+		} else if q.child == w.platform.handle {
 			return true, nil
 		} else {
-			window = child
+			window = q.child
 		}
 	}
 
@@ -3093,16 +3085,28 @@ func platformPostEmptyEvent() error {
 }
 
 func (w *Window) platformGetCursorPos() (xpos, ypos float64, err error) {
-	var root, child _XID
-	var rootX, rootY, childX, childY int32
-	var mask uint32
+	q, _ := w.queryPointer(w.platform.handle)
+	return float64(q.childX), float64(q.childY), nil
+}
 
-	xQueryPointer(_glfw.platformWindow.display, w.platform.handle,
-		&root, &child,
-		&rootX, &rootY, &childX, &childY,
-		&mask)
+// queryPointerResult receives the results of XQueryPointer.
+type queryPointerResult struct {
+	root, child                  _XID
+	rootX, rootY, childX, childY int32
+	mask                         uint32
+}
 
-	return float64(childX), float64(childY), nil
+// queryPointer calls XQueryPointer for window. The results are written to a field of w,
+// which is on the heap, so that local variables do not move to the heap on every call.
+// The returned pointer is valid until the next call. queryPointer must be called on the
+// main thread.
+func (w *Window) queryPointer(window _XID) (*queryPointerResult, bool) {
+	q := &w.platform.queryPointer
+	// XQueryPointer may not write the results if it fails, so start from zero like local variables.
+	*q = queryPointerResult{}
+	ok := xQueryPointer(_glfw.platformWindow.display, window,
+		&q.root, &q.child, &q.rootX, &q.rootY, &q.childX, &q.childY, &q.mask)
+	return q, ok
 }
 
 func (w *Window) platformSetCursorPos(xpos, ypos float64) error {
