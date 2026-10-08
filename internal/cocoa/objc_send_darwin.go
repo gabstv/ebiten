@@ -54,41 +54,41 @@ var objcMsgSendStret = func() uintptr {
 }()
 
 func ObjcSend0(id objc.ID, sel objc.SEL) uintptr {
-	r, _ := purego.SyscallN2(ObjcMsgSend, uintptr(id), uintptr(sel))
+	r, _, _ := purego.Syscall2(ObjcMsgSend, uintptr(id), uintptr(sel))
 	return r
 }
 
 //go:uintptrescapes
 func ObjcSend1(id objc.ID, sel objc.SEL, a0 uintptr) uintptr {
-	r, _ := purego.SyscallN3(ObjcMsgSend, uintptr(id), uintptr(sel), a0)
+	r, _, _ := purego.Syscall3(ObjcMsgSend, uintptr(id), uintptr(sel), a0)
 	return r
 }
 
 //go:uintptrescapes
 func ObjcSend2(id objc.ID, sel objc.SEL, a0, a1 uintptr) uintptr {
-	r, _ := purego.SyscallN4(ObjcMsgSend, uintptr(id), uintptr(sel), a0, a1)
+	r, _, _ := purego.Syscall4(ObjcMsgSend, uintptr(id), uintptr(sel), a0, a1)
 	return r
 }
 
 //go:uintptrescapes
 func ObjcSend3(id objc.ID, sel objc.SEL, a0, a1, a2 uintptr) uintptr {
-	r, _ := purego.SyscallN5(ObjcMsgSend, uintptr(id), uintptr(sel), a0, a1, a2)
+	r, _, _ := purego.Syscall5(ObjcMsgSend, uintptr(id), uintptr(sel), a0, a1, a2)
 	return r
 }
 
 //go:uintptrescapes
 func ObjcSend4(id objc.ID, sel objc.SEL, a0, a1, a2, a3 uintptr) uintptr {
-	r, _ := purego.SyscallN6(ObjcMsgSend, uintptr(id), uintptr(sel), a0, a1, a2, a3)
+	r, _, _ := purego.Syscall6(ObjcMsgSend, uintptr(id), uintptr(sel), a0, a1, a2, a3)
 	return r
 }
 
 //go:uintptrescapes
 func ObjcSend5(id objc.ID, sel objc.SEL, a0, a1, a2, a3, a4 uintptr) uintptr {
-	r, _ := purego.SyscallN7(ObjcMsgSend, uintptr(id), uintptr(sel), a0, a1, a2, a3, a4)
+	r, _, _ := purego.Syscall7(ObjcMsgSend, uintptr(id), uintptr(sel), a0, a1, a2, a3, a4)
 	return r
 }
 
-// The helpers below call objc_msgSend with float and struct arguments through purego.SyscallNMixed.
+// The helpers below call objc_msgSend with float and struct arguments through purego.SyscallMixed.
 //
 // NSPoint and NSSize (two float64s) go in two float registers on both arm64 and amd64.
 // NSRect (four float64s, 32 bytes) differs: on arm64 it is an HFA passed and returned in four
@@ -137,7 +137,7 @@ func (a *msgArgs) setRect(i int, r NSRect) {
 }
 
 func (a *msgArgs) send() (r1, f1, f2 uintptr) {
-	r1, f1, f2, _, _ = purego.SyscallNMixed(ObjcMsgSend, &a.ints, &a.floats)
+	r1, f1, f2, _, _ = purego.SyscallMixed(ObjcMsgSend, &a.ints, &a.floats)
 	return
 }
 
@@ -145,9 +145,9 @@ func (a *msgArgs) send() (r1, f1, f2 uintptr) {
 func (a *msgArgs) sendRect() NSRect {
 	var w [4]uintptr
 	if isAMD64 {
-		w = purego.SyscallNMixedStret(objcMsgSendStret, &a.ints, &a.floats)
+		w = purego.SyscallMixedStret(objcMsgSendStret, &a.ints, &a.floats)
 	} else {
-		_, w[0], w[1], w[2], w[3] = purego.SyscallNMixed(ObjcMsgSend, &a.ints, &a.floats)
+		_, w[0], w[1], w[2], w[3] = purego.SyscallMixed(ObjcMsgSend, &a.ints, &a.floats)
 	}
 	return NSRect{
 		Origin: NSPoint{X: math.Float64frombits(uint64(w[0])), Y: math.Float64frombits(uint64(w[1]))},
