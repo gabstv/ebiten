@@ -30,4 +30,4 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.29 // indirect
 )
 
-replace github.com/ebitengine/purego => github.com/gabstv/purego v0.12.0-alpha.1.0.20261007140143-c0479b6ebb6b
+replace github.com/ebitengine/purego => github.com/gabstv/purego v0.12.0-alpha.1.0.20261008203149-2c7bfd83db40
