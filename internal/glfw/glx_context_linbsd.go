@@ -230,6 +230,19 @@ func initGLX() (err error) {
 		return true
 	}
 
+	// glXSwapBuffers runs every frame, so it calls C through purego.Syscall2, which does
+	// not allocate, unlike a function RegisterFunc makes.
+	registerSwapBuffers := func() bool {
+		sym, err := purego.Dlsym(handle, "glXSwapBuffers")
+		if err != nil || sym == 0 {
+			return false
+		}
+		glx.SwapBuffers = func(display uintptr, drawable _XID) {
+			purego.Syscall2(sym, display, uintptr(drawable))
+		}
+		return true
+	}
+
 	if !registerRequired(&glx.GetFBConfigs, "glXGetFBConfigs") ||
 		!registerRequired(&glx.GetFBConfigAttrib, "glXGetFBConfigAttrib") ||
 		!registerRequired(&glx.GetClientString, "glXGetClientString") ||
@@ -237,7 +250,7 @@ func initGLX() (err error) {
 		!registerRequired(&glx.QueryVersion, "glXQueryVersion") ||
 		!registerRequired(&glx.DestroyContext, "glXDestroyContext") ||
 		!registerRequired(&glx.MakeCurrent, "glXMakeCurrent") ||
-		!registerRequired(&glx.SwapBuffers, "glXSwapBuffers") ||
+		!registerSwapBuffers() ||
 		!registerRequired(&glx.QueryExtensionsString, "glXQueryExtensionsString") ||
 		!registerRequired(&glx.CreateNewContext, "glXCreateNewContext") ||
 		!registerRequired(&glx.CreateWindow, "glXCreateWindow") ||
