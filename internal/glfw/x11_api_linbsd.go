@@ -250,8 +250,8 @@ func initLibX11() error {
 	purego.RegisterLibFunc(&xDisplayKeycodes, lib, "XDisplayKeycodes")
 	purego.RegisterLibFunc(&xEventsQueued, lib, "XEventsQueued")
 	purego.RegisterLibFunc(&xFilterEvent, lib, "XFilterEvent")
-	xFlush = displayFunc(lib, "XFlush")
-	purego.RegisterLibFunc(&xFree, lib, "XFree")
+	xFlush = oneArgFunc(lib, "XFlush")
+	xFree = oneArgFunc(lib, "XFree")
 	purego.RegisterLibFunc(&xFreeColormap, lib, "XFreeColormap")
 	purego.RegisterLibFunc(&xFreeCursor, lib, "XFreeCursor")
 	purego.RegisterLibFunc(&xFreeEventData, lib, "XFreeEventData")
@@ -259,14 +259,14 @@ func initLibX11() error {
 	purego.RegisterLibFunc(&xGetEventData, lib, "XGetEventData")
 	purego.RegisterLibFunc(&xGetICValues, lib, "XGetICValues")
 	purego.RegisterLibFunc(&xGetIMValues, lib, "XGetIMValues")
-	purego.RegisterLibFunc(&xGetInputFocus, lib, "XGetInputFocus")
+	xGetInputFocus = getInputFocusFunc(lib)
 	purego.RegisterLibFunc(&xGetKeyboardMapping, lib, "XGetKeyboardMapping")
 	purego.RegisterLibFunc(&xGetScreenSaver, lib, "XGetScreenSaver")
 	purego.RegisterLibFunc(&xGetSelectionOwner, lib, "XGetSelectionOwner")
 	purego.RegisterLibFunc(&xGetVisualInfo, lib, "XGetVisualInfo")
 	purego.RegisterLibFunc(&xGetWMNormalHints, lib, "XGetWMNormalHints")
-	purego.RegisterLibFunc(&xGetWindowAttributes, lib, "XGetWindowAttributes")
-	purego.RegisterLibFunc(&xGetWindowProperty, lib, "XGetWindowProperty")
+	xGetWindowAttributes = getWindowAttributesFunc(lib)
+	xGetWindowProperty = getWindowPropertyFunc(lib)
 	purego.RegisterLibFunc(&xGrabPointer, lib, "XGrabPointer")
 	purego.RegisterLibFunc(&xIconifyWindow, lib, "XIconifyWindow")
 	purego.RegisterLibFunc(&xInitThreads, lib, "XInitThreads")
@@ -280,8 +280,8 @@ func initLibX11() error {
 	purego.RegisterLibFunc(&xOpenDisplay, lib, "XOpenDisplay")
 	purego.RegisterLibFunc(&xOpenIM, lib, "XOpenIM")
 	purego.RegisterLibFunc(&xPeekEvent, lib, "XPeekEvent")
-	xPending = displayFunc(lib, "XPending")
-	xQLength = displayFunc(lib, "XQLength")
+	xPending = oneArgFunc(lib, "XPending")
+	xQLength = oneArgFunc(lib, "XQLength")
 	purego.RegisterLibFunc(&xQueryExtension, lib, "XQueryExtension")
 	xQueryPointer = queryPointerFunc(lib)
 	purego.RegisterLibFunc(&xRaiseWindow, lib, "XRaiseWindow")
@@ -302,7 +302,7 @@ func initLibX11() error {
 	purego.RegisterLibFunc(&xSetWMProtocols, lib, "XSetWMProtocols")
 	purego.RegisterLibFunc(&xSupportsLocale, lib, "XSupportsLocale")
 	purego.RegisterLibFunc(&xSync, lib, "XSync")
-	purego.RegisterLibFunc(&xTranslateCoordinates, lib, "XTranslateCoordinates")
+	xTranslateCoordinates = translateCoordinatesFunc(lib)
 	purego.RegisterLibFunc(&xUndefineCursor, lib, "XUndefineCursor")
 	purego.RegisterLibFunc(&xUngrabPointer, lib, "XUngrabPointer")
 	purego.RegisterLibFunc(&xUnmapWindow, lib, "XUnmapWindow")
@@ -382,12 +382,12 @@ func mustDlsym(lib uintptr, name string) uintptr {
 	return sym
 }
 
-// displayFunc returns a function that calls the C function name, which takes a Display*
-// and returns an int.
-func displayFunc(lib uintptr, name string) func(display uintptr) int32 {
+// oneArgFunc returns a function that calls the C function name, which takes one
+// pointer-sized argument, such as a Display*, and returns an int.
+func oneArgFunc(lib uintptr, name string) func(arg uintptr) int32 {
 	sym := mustDlsym(lib, name)
-	return func(display uintptr) int32 {
-		r, _, _ := purego.Syscall1(sym, display)
+	return func(arg uintptr) int32 {
+		r, _, _ := purego.Syscall1(sym, arg)
 		return int32(r)
 	}
 }
@@ -404,6 +404,52 @@ func queryPointerFunc(lib uintptr) func(display uintptr, w _XID, rootReturn, chi
 			uintptr(unsafe.Pointer(winXReturn)), uintptr(unsafe.Pointer(winYReturn)),
 			uintptr(unsafe.Pointer(maskReturn)))
 		// XQueryPointer returns a Bool, which is an int.
+		return int32(r) != 0
+	}
+}
+
+// getInputFocusFunc returns a function that calls XGetInputFocus.
+func getInputFocusFunc(lib uintptr) func(display uintptr, focusReturn *_XID, revertToReturn *int32) int32 {
+	sym := mustDlsym(lib, "XGetInputFocus")
+	return func(display uintptr, focusReturn *_XID, revertToReturn *int32) int32 {
+		r, _, _ := purego.Syscall3(sym, display, uintptr(unsafe.Pointer(focusReturn)), uintptr(unsafe.Pointer(revertToReturn)))
+		return int32(r)
+	}
+}
+
+// getWindowAttributesFunc returns a function that calls XGetWindowAttributes.
+func getWindowAttributesFunc(lib uintptr) func(display uintptr, w _XID, attributes *_XWindowAttributes) int32 {
+	sym := mustDlsym(lib, "XGetWindowAttributes")
+	return func(display uintptr, w _XID, attributes *_XWindowAttributes) int32 {
+		r, _, _ := purego.Syscall3(sym, display, uintptr(w), uintptr(unsafe.Pointer(attributes)))
+		return int32(r)
+	}
+}
+
+// getWindowPropertyFunc returns a function that calls XGetWindowProperty.
+func getWindowPropertyFunc(lib uintptr) func(display uintptr, w _XID, property _Atom, longOffset, longLength _Clong, delete bool, reqType _Atom, actualTypeReturn *_Atom, actualFormatReturn *int32, nitemsReturn *_Culong, bytesAfterReturn *_Culong, propReturn *uintptr) int32 {
+	sym := mustDlsym(lib, "XGetWindowProperty")
+	return func(display uintptr, w _XID, property _Atom, longOffset, longLength _Clong, delete bool, reqType _Atom, actualTypeReturn *_Atom, actualFormatReturn *int32, nitemsReturn *_Culong, bytesAfterReturn *_Culong, propReturn *uintptr) int32 {
+		var del uintptr
+		if delete {
+			del = 1
+		}
+		r, _, _ := purego.Syscall12(sym, display, uintptr(w), uintptr(property),
+			uintptr(longOffset), uintptr(longLength), del, uintptr(reqType),
+			uintptr(unsafe.Pointer(actualTypeReturn)), uintptr(unsafe.Pointer(actualFormatReturn)),
+			uintptr(unsafe.Pointer(nitemsReturn)), uintptr(unsafe.Pointer(bytesAfterReturn)),
+			uintptr(unsafe.Pointer(propReturn)))
+		return int32(r)
+	}
+}
+
+// translateCoordinatesFunc returns a function that calls XTranslateCoordinates.
+func translateCoordinatesFunc(lib uintptr) func(display uintptr, srcW, destW _XID, srcX, srcY int32, destXReturn, destYReturn *int32, childReturn *_XID) bool {
+	sym := mustDlsym(lib, "XTranslateCoordinates")
+	return func(display uintptr, srcW, destW _XID, srcX, srcY int32, destXReturn, destYReturn *int32, childReturn *_XID) bool {
+		r, _, _ := purego.Syscall8(sym, display, uintptr(srcW), uintptr(destW), uintptr(srcX), uintptr(srcY),
+			uintptr(unsafe.Pointer(destXReturn)), uintptr(unsafe.Pointer(destYReturn)), uintptr(unsafe.Pointer(childReturn)))
+		// XTranslateCoordinates returns a Bool, which is an int.
 		return int32(r) != 0
 	}
 }

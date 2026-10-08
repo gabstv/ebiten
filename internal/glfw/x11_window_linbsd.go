@@ -158,11 +158,15 @@ func waitForVisibilityNotify(window *Window) bool {
 func getWindowState(window *Window) int {
 	result := _WithdrawnState
 
-	var statePtr uintptr
+	// The value is written to the library state rather than to a local variable, which
+	// would move to the heap on every call.
+	value := &_glfw.platformWindow.windowProperty.value
+	*value = 0
 	itemCount := getWindowPropertyX11(window.platform.handle,
 		_glfw.platformWindow.WM_STATE,
 		_glfw.platformWindow.WM_STATE,
-		&statePtr)
+		value)
+	statePtr := *value
 	if statePtr != 0 {
 		defer xFree(statePtr)
 	}
@@ -2132,9 +2136,11 @@ func processEvent(event *_XEvent) error {
 // type. The returned data must be released with xFree.
 // Inspired by fghGetWindowProperty from freeglut
 func getWindowPropertyX11(window _XID, property _Atom, typ _Atom, value *uintptr) _Culong {
-	var actualType _Atom
-	var actualFormat int32
-	var itemCount, bytesAfter _Culong
+	// The results are written to the library state rather than to local variables, which
+	// would move to the heap on every call. XGetWindowProperty may not write them if it
+	// fails, so start from zero like local variables.
+	p := &_glfw.platformWindow.windowProperty
+	p.actualType, p.actualFormat, p.itemCount, p.bytesAfter = 0, 0, 0, 0
 
 	xGetWindowProperty(_glfw.platformWindow.display,
 		window,
@@ -2143,13 +2149,13 @@ func getWindowPropertyX11(window _XID, property _Atom, typ _Atom, value *uintptr
 		math.MaxInt,
 		false,
 		typ,
-		&actualType,
-		&actualFormat,
-		&itemCount,
-		&bytesAfter,
+		&p.actualType,
+		&p.actualFormat,
+		&p.itemCount,
+		&p.bytesAfter,
 		value)
 
-	return itemCount
+	return p.itemCount
 }
 
 // isVisualTransparentX11 reports whether the visual supports framebuffer
@@ -2426,13 +2432,13 @@ func (w *Window) platformSetWindowIcon(images []*Image) error {
 }
 
 func (w *Window) platformGetWindowPos() (xpos, ypos int, err error) {
-	var dummy _XID
-	var x, y int32
-
+	// The results are written to fields of w, which is on the heap, so that local
+	// variables do not move to the heap on every call.
+	w.platform.translatedX, w.platform.translatedY, w.platform.translatedChild = 0, 0, 0
 	xTranslateCoordinates(_glfw.platformWindow.display, w.platform.handle, _glfw.platformWindow.root,
-		0, 0, &x, &y, &dummy)
+		0, 0, &w.platform.translatedX, &w.platform.translatedY, &w.platform.translatedChild)
 
-	return int(x), int(y), nil
+	return int(w.platform.translatedX), int(w.platform.translatedY), nil
 }
 
 func (w *Window) platformSetWindowPos(xpos, ypos int) error {
@@ -2463,10 +2469,19 @@ func (w *Window) platformSetWindowPos(xpos, ypos int) error {
 }
 
 func (w *Window) platformGetWindowSize() (width, height int, err error) {
-	var attribs _XWindowAttributes
-	xGetWindowAttributes(_glfw.platformWindow.display, w.platform.handle, &attribs)
-
+	attribs := w.getWindowAttributes()
 	return int(attribs.Width), int(attribs.Height), nil
+}
+
+// getWindowAttributes calls XGetWindowAttributes for w. The result is written to a field
+// of w, which is on the heap, so that a local variable does not move to the heap on every
+// call. The returned pointer is valid until the next call.
+func (w *Window) getWindowAttributes() *_XWindowAttributes {
+	a := &w.platform.attributes
+	// XGetWindowAttributes may not write the result if it fails, so start from zero like a local variable.
+	*a = _XWindowAttributes{}
+	xGetWindowAttributes(_glfw.platformWindow.display, w.platform.handle, a)
+	return a
 }
 
 func (w *Window) platformSetWindowSize(width, height int) error {
@@ -2819,11 +2834,11 @@ func (w *Window) platformSetWindowMonitor(monitor *Monitor, xpos, ypos, width, h
 }
 
 func (w *Window) platformWindowFocused() bool {
-	var focused _XID
-	var state int32
-
-	xGetInputFocus(_glfw.platformWindow.display, &focused, &state)
-	return w.platform.handle == focused
+	// The results are written to fields of w, which is on the heap, so that local
+	// variables do not move to the heap on every call.
+	w.platform.focused, w.platform.revertTo = 0, 0
+	xGetInputFocus(_glfw.platformWindow.display, &w.platform.focused, &w.platform.revertTo)
+	return w.platform.handle == w.platform.focused
 }
 
 func (w *Window) platformWindowIconified() bool {
@@ -2831,9 +2846,7 @@ func (w *Window) platformWindowIconified() bool {
 }
 
 func (w *Window) platformWindowVisible() bool {
-	var wa _XWindowAttributes
-	xGetWindowAttributes(_glfw.platformWindow.display, w.platform.handle, &wa)
-	return wa.MapState == _IsViewable
+	return w.getWindowAttributes().MapState == _IsViewable
 }
 
 func (w *Window) platformWindowMaximized() bool {
