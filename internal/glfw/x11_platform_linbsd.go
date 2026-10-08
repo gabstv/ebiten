@@ -26,6 +26,14 @@ type platformWindowState struct {
 	// queryPointer receives the results of XQueryPointer. See queryPointer.
 	queryPointer queryPointerResult
 
+	// These receive the results of X functions called periodically, so that
+	// local variables do not move to the heap on every call. They are used
+	// only on the main thread.
+	attributes               _XWindowAttributes
+	translatedX, translatedY int32
+	translatedChild, focused _XID
+	revertTo                 int32
+
 	// The composition the input method is currently showing, accumulated from
 	// the incremental preedit draw callbacks, the matching per-character
 	// feedback, and the caret offset within it in characters. All are zero
@@ -95,6 +103,16 @@ type platformCursorState struct {
 }
 
 type platformLibraryWindowState struct {
+	// windowProperty receives the results of XGetWindowProperty in getWindowPropertyX11,
+	// so that local variables do not move to the heap on every call. It is used only on
+	// the main thread.
+	windowProperty struct {
+		actualType            _Atom
+		actualFormat          int32
+		itemCount, bytesAfter _Culong
+		value                 uintptr
+	}
+
 	display uintptr // Display*
 	screen  int
 	root    _XID
