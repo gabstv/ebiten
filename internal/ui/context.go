@@ -46,6 +46,8 @@ type Game interface {
 type context struct {
 	game Game
 
+	readInputStateFunc func(*InputState)
+
 	screenTransparent bool
 
 	updateCalled bool
@@ -258,9 +260,14 @@ func (c *context) updateFrameImpl(graphicsDriver graphicsdriver.Graphics, update
 // readInputStateForTick takes the input snapshot for the tick that is about to run.
 func (c *context) readInputStateForTick(ui *UserInterface) {
 	// Read the input state and use it for one tick to give a consistent result for one tick (#2496, #2501).
-	c.game.UpdateInputState(func(inputState *InputState) {
-		ui.readInputState(inputState)
-	})
+	if c.readInputStateFunc == nil {
+		// ui is the process-wide UserInterface, so the closure can be built once
+		// instead of allocating a new one every tick.
+		c.readInputStateFunc = func(inputState *InputState) {
+			ui.readInputState(inputState)
+		}
+	}
+	c.game.UpdateInputState(c.readInputStateFunc)
 }
 
 func (c *context) flushCommandsAndWait(needsSwapBuffers bool, graphicsDriver graphicsdriver.Graphics, vsyncEnabled bool, refreshRate int) error {
