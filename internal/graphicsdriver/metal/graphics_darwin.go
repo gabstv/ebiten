@@ -84,6 +84,18 @@ type Graphics struct {
 	tmpBuffers   []mtl.Buffer
 	tmpUniforms  []uint32
 
+	// tmpViewport and tmpScissorRect are passed to Metal by pointer. Keeping them in
+	// Graphics, which is already on the heap, avoids a heap allocation per call.
+	tmpViewport    mtl.Viewport
+	tmpScissorRect mtl.ScissorRect
+
+	// spareCBs and spareBuffers recycle the per-frame slices of frameToCB and buffers.
+	spareCBs     [][]mtl.CommandBuffer
+	spareBuffers [][]mtl.Buffer
+
+	// tmpGCBuffers is scratch space for gcBuffers.
+	tmpGCBuffers []mtl.Buffer
+
 	// residencySet holds the textures and the buffers to keep resident in GPU memory.
 	// residencySet is zero if residency sets are not available.
 	residencySet mtl.ResidencySet
@@ -235,31 +247,52 @@ loop:
 			cb.Release()
 		}
 		delete(g.frameToCB, frame)
+		clear(cbs)
+		g.spareCBs = append(g.spareCBs, cbs[:0])
 
-		for _, b := range g.buffers[frame] {
+		bufs := g.buffers[frame]
+		for _, b := range bufs {
 			if g.unusedBuffers == nil {
 				g.unusedBuffers = map[mtl.Buffer]struct{}{}
 			}
 			g.unusedBuffers[b] = struct{}{}
 		}
 		delete(g.buffers, frame)
+		if bufs != nil {
+			clear(bufs)
+			g.spareBuffers = append(g.spareBuffers, bufs[:0])
+		}
 	}
 
 	const maxUnusedBuffers = 10
 	if len(g.unusedBuffers) > maxUnusedBuffers {
-		bufs := make([]mtl.Buffer, 0, len(g.unusedBuffers))
+		bufs := g.tmpGCBuffers[:0]
 		for b := range g.unusedBuffers {
 			bufs = append(bufs, b)
 		}
+		defer func() {
+			clear(bufs)
+			g.tmpGCBuffers = bufs[:0]
+		}()
 		slices.SortFunc(bufs, func(a, b mtl.Buffer) int {
 			return cmp.Compare(b.Length(), a.Length())
 		})
 		for _, b := range bufs[maxUnusedBuffers:] {
 			delete(g.unusedBuffers, b)
-			g.removeResidentResource(b)
+			removeResidentResource(g, b)
 			b.Release()
 		}
 	}
+}
+
+// frameSlice returns m[frame], or a recycled empty slice from spares if there is none yet.
+func frameSlice[T any](m map[int64][]T, frame int64, spares *[][]T) []T {
+	if s, ok := m[frame]; ok || len(*spares) == 0 {
+		return s
+	}
+	s := (*spares)[len(*spares)-1]
+	*spares = (*spares)[:len(*spares)-1]
+	return s
 }
 
 func (g *Graphics) ensureCommandBuffer() error {
@@ -274,7 +307,7 @@ func (g *Graphics) ensureCommandBuffer() error {
 	if g.frameToCB == nil {
 		g.frameToCB = map[int64][]mtl.CommandBuffer{}
 	}
-	g.frameToCB[g.frame] = append(g.frameToCB[g.frame], g.cb)
+	g.frameToCB[g.frame] = append(frameSlice(g.frameToCB, g.frame, &g.spareCBs), g.cb)
 	g.cb.Retain()
 	return nil
 }
@@ -298,14 +331,14 @@ func (g *Graphics) availableBuffer(length uintptr) (mtl.Buffer, error) {
 		if err != nil {
 			return mtl.Buffer{}, fmt.Errorf("metal: device.NewBufferWithLength failed: %w", err)
 		}
-		g.addResidentResource(b)
+		addResidentResource(g, b)
 		newBuf = b
 	}
 
 	if g.buffers == nil {
 		g.buffers = map[int64][]mtl.Buffer{}
 	}
-	g.buffers[g.frame] = append(g.buffers[g.frame], newBuf)
+	g.buffers[g.frame] = append(frameSlice(g.buffers, g.frame, &g.spareBuffers), newBuf)
 	return newBuf, nil
 }
 
@@ -412,7 +445,7 @@ func (g *Graphics) NewImage(width, height int) (graphicsdriver.Image, error) {
 	if err != nil {
 		return nil, fmt.Errorf("metal: device.NewTextureWithDescriptor failed: %w", err)
 	}
-	g.addResidentResource(t)
+	addResidentResource(g, t)
 	i := &Image{
 		id:       g.genNextImageID(),
 		graphics: g,
@@ -535,19 +568,21 @@ func (g *Graphics) Initialize() error {
 	return nil
 }
 
-func (g *Graphics) addResidentResource(r mtl.Resource) {
+// addResidentResource and removeResidentResource are generic so that passing a Buffer or a Texture
+// does not box it into an interface.
+func addResidentResource[T mtl.Resource](g *Graphics, r T) {
 	if g.residencySet == (mtl.ResidencySet{}) {
 		return
 	}
-	g.residencySet.AddAllocation(r)
+	mtl.AddAllocation(g.residencySet, r)
 	g.residencySetDirty = true
 }
 
-func (g *Graphics) removeResidentResource(r mtl.Resource) {
+func removeResidentResource[T mtl.Resource](g *Graphics, r T) {
 	if g.residencySet == (mtl.ResidencySet{}) {
 		return
 	}
-	g.residencySet.RemoveAllocation(r)
+	mtl.RemoveAllocation(g.residencySet, r)
 	g.residencySetDirty = true
 }
 
@@ -669,14 +704,15 @@ func (g *Graphics) draw(dst *Image, dstRegions []graphicsdriver.DstRegion, srcs 
 	}
 
 	w, h := dst.internalSize()
-	g.rce.SetViewport(mtl.Viewport{
+	g.tmpViewport = mtl.Viewport{
 		OriginX: 0,
 		OriginY: 0,
 		Width:   float64(w),
 		Height:  float64(h),
 		ZNear:   -1,
 		ZFar:    1,
-	})
+	}
+	g.rce.SetViewport(&g.tmpViewport)
 	g.rce.SetVertexBuffer(g.vb, 0, 0)
 
 	if len(uniforms) > 0 {
@@ -707,12 +743,13 @@ func (g *Graphics) draw(dst *Image, dstRegions []graphicsdriver.DstRegion, srcs 
 	rps := s
 
 	for _, dstRegion := range dstRegions {
-		g.rce.SetScissorRect(mtl.ScissorRect{
+		g.tmpScissorRect = mtl.ScissorRect{
 			X:      dstRegion.Region.Min.X,
 			Y:      dstRegion.Region.Min.Y,
 			Width:  dstRegion.Region.Dx(),
 			Height: dstRegion.Region.Dy(),
-		})
+		}
+		g.rce.SetScissorRect(&g.tmpScissorRect)
 
 		g.rce.SetRenderPipelineState(rps)
 		g.rce.DrawIndexedPrimitives(mtl.PrimitiveTypeTriangle, dstRegion.IndexCount, mtl.IndexTypeUInt32, g.ib, indexOffset*int(unsafe.Sizeof(uint32(0))))
@@ -848,7 +885,7 @@ func (i *Image) internalSize() (int, int) {
 
 func (i *Image) Dispose() {
 	if i.texture != (mtl.Texture{}) {
-		i.graphics.removeResidentResource(i.texture)
+		removeResidentResource(i.graphics, i.texture)
 		i.texture.Release()
 		i.texture = mtl.Texture{}
 	}
