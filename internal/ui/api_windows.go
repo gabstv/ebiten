@@ -94,8 +94,8 @@ var (
 )
 
 func _ImmAssociateContext(hwnd windows.HWND, hIMC uintptr) (uintptr, error) {
-	r, _, e := procImmAssociateContext.Call(uintptr(hwnd), hIMC)
-	if e != nil && !errors.Is(e, windows.ERROR_SUCCESS) {
+	r, _, e := syscall.SyscallN(procImmAssociateContext.Addr(), uintptr(hwnd), hIMC)
+	if !errors.Is(e, windows.ERROR_SUCCESS) {
 		return 0, fmt.Errorf("ui: ImmAssociateContext failed: error code: %w", e)
 	}
 	return r, nil
@@ -103,7 +103,7 @@ func _ImmAssociateContext(hwnd windows.HWND, hIMC uintptr) (uintptr, error) {
 
 func _CoCreateInstance(rclsid *windows.GUID, pUnkOuter unsafe.Pointer, dwClsContext uint32, riid *windows.GUID) (unsafe.Pointer, error) {
 	var ptr unsafe.Pointer
-	r, _, _ := procCoCreateInstance.Call(uintptr(unsafe.Pointer(rclsid)), uintptr(pUnkOuter), uintptr(dwClsContext), uintptr(unsafe.Pointer(riid)), uintptr(unsafe.Pointer(&ptr)))
+	r, _, _ := syscall.SyscallN(procCoCreateInstance.Addr(), uintptr(unsafe.Pointer(rclsid)), uintptr(pUnkOuter), uintptr(dwClsContext), uintptr(unsafe.Pointer(riid)), uintptr(unsafe.Pointer(&ptr)))
 	runtime.KeepAlive(rclsid)
 	runtime.KeepAlive(riid)
 	if uint32(r) != uint32(windows.S_OK) {
@@ -113,7 +113,7 @@ func _CoCreateInstance(rclsid *windows.GUID, pUnkOuter unsafe.Pointer, dwClsCont
 }
 
 func _GetSystemMetrics(nIndex int) (int32, error) {
-	r, _, _ := procGetSystemMetrics.Call(uintptr(nIndex))
+	r, _, _ := syscall.SyscallN(procGetSystemMetrics.Addr(), uintptr(nIndex))
 	if int32(r) == 0 {
 		// GetLastError doesn't provide extended information.
 		// See https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getsystemmetrics
@@ -123,7 +123,7 @@ func _GetSystemMetrics(nIndex int) (int32, error) {
 }
 
 func _MonitorFromWindow(hwnd windows.HWND, dwFlags uint32) uintptr {
-	r, _, _ := procMonitorFromWindow.Call(uintptr(hwnd), uintptr(dwFlags))
+	r, _, _ := syscall.SyscallN(procMonitorFromWindow.Addr(), uintptr(hwnd), uintptr(dwFlags))
 	return r
 }
 
@@ -131,9 +131,9 @@ func _GetMonitorInfoW(hMonitor uintptr) (_MONITORINFO, error) {
 	var mi _MONITORINFO
 	mi.cbSize = uint32(unsafe.Sizeof(mi))
 
-	r, _, e := procGetMonitorInfoW.Call(hMonitor, uintptr(unsafe.Pointer(&mi)))
+	r, _, e := syscall.SyscallN(procGetMonitorInfoW.Addr(), hMonitor, uintptr(unsafe.Pointer(&mi)))
 	if int32(r) == 0 {
-		if e != nil && !errors.Is(e, windows.ERROR_SUCCESS) {
+		if !errors.Is(e, windows.ERROR_SUCCESS) {
 			return _MONITORINFO{}, fmt.Errorf("ui: GetMonitorInfoW failed: error code: %w", e)
 		}
 		return _MONITORINFO{}, fmt.Errorf("ui: GetMonitorInfoW failed: returned 0")
@@ -143,9 +143,9 @@ func _GetMonitorInfoW(hMonitor uintptr) (_MONITORINFO, error) {
 
 func _GetCursorPos() (int32, int32, error) {
 	var pt _POINT
-	r, _, e := procGetCursorPos.Call(uintptr(unsafe.Pointer(&pt)))
+	r, _, e := syscall.SyscallN(procGetCursorPos.Addr(), uintptr(unsafe.Pointer(&pt)))
 	if int32(r) == 0 {
-		if e != nil && !errors.Is(e, windows.ERROR_SUCCESS) {
+		if !errors.Is(e, windows.ERROR_SUCCESS) {
 			return 0, 0, fmt.Errorf("ui: GetCursorPos failed: error code: %w", e)
 		}
 		return 0, 0, fmt.Errorf("ui: GetCursorPos failed: returned 0")
@@ -154,14 +154,14 @@ func _GetCursorPos() (int32, int32, error) {
 }
 
 func _GetKeyState(nVirtKey int) int16 {
-	r, _, _ := procGetKeyState.Call(uintptr(nVirtKey))
+	r, _, _ := syscall.SyscallN(procGetKeyState.Addr(), uintptr(nVirtKey))
 	return int16(r)
 }
 
 func _DwmSetWindowAttribute(hwnd windows.HWND, dwAttribute uint32, pvAttribute unsafe.Pointer, cbAttribute uint32) error {
-	r, _, e := procDwmSetWindowAttribute.Call(uintptr(hwnd), uintptr(dwAttribute), uintptr(pvAttribute), uintptr(cbAttribute))
+	r, _, e := syscall.SyscallN(procDwmSetWindowAttribute.Addr(), uintptr(hwnd), uintptr(dwAttribute), uintptr(pvAttribute), uintptr(cbAttribute))
 	if uint32(r) != uint32(windows.S_OK) {
-		if e != nil && !errors.Is(e, windows.ERROR_SUCCESS) {
+		if !errors.Is(e, windows.ERROR_SUCCESS) {
 			return fmt.Errorf("ui: DwmSetWindowAttribute failed: error code: %w", e)
 		}
 		return fmt.Errorf("ui: DwmSetWindowAttribute failed: HRESULT(%d)", uint32(r))
