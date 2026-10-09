@@ -29,3 +29,5 @@ require (
 	github.com/jfreymuth/vorbis v1.0.2 // indirect
 	github.com/pierrec/lz4/v4 v4.1.29 // indirect
 )
+
+replace github.com/ebitengine/purego => github.com/gabstv/purego v0.12.0-alpha.1.0.20261009181810-3675a18ec33a
