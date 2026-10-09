@@ -10,6 +10,7 @@ concurrency:
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         go: ['1.26.x', '1.27.x']
@@ -120,6 +121,7 @@ jobs:
           echo ')' >> main.go
           echo 'func main() {}' >> main.go
           go mod edit -replace github.com/hajimehoshi/ebiten/v2=$GITHUB_WORKSPACE
+          go mod edit -replace github.com/ebitengine/purego=github.com/gabstv/purego@v0.12.0-alpha.1.0.20261009181927-c17791603b96
           go mod tidy
           go mod vendor
           go build -v .
@@ -233,6 +235,7 @@ jobs:
 
   cgo:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         go: ['1.26.x', '1.27.x']
@@ -274,6 +277,7 @@ jobs:
           git clone --depth=1 https://github.com/hajimehoshi/go-inovation
           cd go-inovation
           go mod edit -replace=github.com/hajimehoshi/ebiten/v2=$GITHUB_WORKSPACE
+          go mod edit -replace=github.com/ebitengine/purego=github.com/gabstv/purego@v0.12.0-alpha.1.0.20261009181927-c17791603b96
           go mod tidy
 
       - name: go build (NintendoSDK)
