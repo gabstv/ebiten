@@ -126,7 +126,7 @@ type NSObject struct {
 }
 
 func (n NSObject) Retain() {
-	n.Send(sel_retain)
+	ObjcSend0(n.ID, sel_retain)
 }
 
 type NSError struct {
@@ -138,31 +138,31 @@ type NSWindow struct {
 }
 
 func (w NSWindow) StyleMask() NSUInteger {
-	return NSUInteger(w.Send(sel_styleMask))
+	return NSUInteger(ObjcSend0(w.ID, sel_styleMask))
 }
 
 func (w NSWindow) SetStyleMask(styleMask NSUInteger) {
-	w.Send(sel_setStyleMask, styleMask)
+	ObjcSend1(w.ID, sel_setStyleMask, uintptr(styleMask))
 }
 
 func (w NSWindow) IsVisible() bool {
-	return w.Send(sel_isVisible) != 0
+	return ObjcSendBool(w.ID, sel_isVisible)
 }
 
 func (w NSWindow) OcclusionState() NSUInteger {
-	return NSUInteger(w.Send(sel_occlusionState))
+	return NSUInteger(ObjcSend0(w.ID, sel_occlusionState))
 }
 
 func (w NSWindow) InLiveResize() bool {
-	return w.Send(sel_inLiveResize) != 0
+	return ObjcSendBool(w.ID, sel_inLiveResize)
 }
 
 func (w NSWindow) Screen() NSScreen {
-	return NSScreen{w.Send(sel_screen)}
+	return NSScreen{objc.ID(ObjcSend0(w.ID, sel_screen))}
 }
 
 func (w NSWindow) ContentView() NSView {
-	return NSView{w.Send(sel_contentView)}
+	return NSView{objc.ID(ObjcSend0(w.ID, sel_contentView))}
 }
 
 type NSView struct {
@@ -170,7 +170,7 @@ type NSView struct {
 }
 
 func (v NSView) SetLayer(layer uintptr) {
-	v.Send(sel_setLayer, layer)
+	ObjcSend1(v.ID, sel_setLayer, layer)
 }
 
 type NSViewLayerContentsRedrawPolicy NSInteger
@@ -184,11 +184,11 @@ const (
 )
 
 func (v NSView) SetLayerContentsRedrawPolicy(policy NSViewLayerContentsRedrawPolicy) {
-	v.Send(sel_setLayerContentsRedrawPolicy, int(policy))
+	ObjcSend1(v.ID, sel_setLayerContentsRedrawPolicy, uintptr(policy))
 }
 
 func (v NSView) SetWantsLayer(wantsLayer bool) {
-	v.Send(sel_setWantsLayer, wantsLayer)
+	ObjcSend1(v.ID, sel_setWantsLayer, BoolToUintptr(wantsLayer))
 }
 
 type NSAutoreleasePool struct {
@@ -196,11 +196,11 @@ type NSAutoreleasePool struct {
 }
 
 func NSAutoreleasePool_new() NSAutoreleasePool {
-	return NSAutoreleasePool{objc.ID(class_NSAutoreleasePool).Send(sel_new)}
+	return NSAutoreleasePool{objc.ID(ObjcSend0(objc.ID(class_NSAutoreleasePool), sel_new))}
 }
 
 func (p NSAutoreleasePool) Release() {
-	p.Send(sel_release)
+	ObjcSend0(p.ID, sel_release)
 }
 
 type NSString struct {
@@ -208,7 +208,7 @@ type NSString struct {
 }
 
 func NSString_alloc() NSString {
-	return NSString{objc.ID(class_NSString).Send(sel_alloc)}
+	return NSString{objc.ID(ObjcSend0(objc.ID(class_NSString), sel_alloc))}
 }
 
 func (s NSString) InitWithUTF8String(utf8 string) NSString {
@@ -224,7 +224,7 @@ type NSNotification struct {
 }
 
 func (n NSNotification) Object() objc.ID {
-	return n.Send(sel_object)
+	return objc.ID(ObjcSend0(n.ID, sel_object))
 }
 
 type NSScreen struct {
@@ -232,11 +232,11 @@ type NSScreen struct {
 }
 
 func NSScreen_mainScreen() NSScreen {
-	return NSScreen{objc.ID(class_NSScreen).Send(sel_mainScreen)}
+	return NSScreen{objc.ID(ObjcSend0(objc.ID(class_NSScreen), sel_mainScreen))}
 }
 
 func (s NSScreen) DeviceDescription() NSDictionary {
-	return NSDictionary{s.Send(sel_deviceDescription)}
+	return NSDictionary{objc.ID(ObjcSend0(s.ID, sel_deviceDescription))}
 }
 
 type NSDictionary struct {
@@ -244,7 +244,7 @@ type NSDictionary struct {
 }
 
 func (d NSDictionary) ObjectForKey(object objc.ID) objc.ID {
-	return d.Send(sel_objectForKey, object)
+	return objc.ID(ObjcSend1(d.ID, sel_objectForKey, uintptr(object)))
 }
 
 type NSNumber struct {
@@ -252,7 +252,8 @@ type NSNumber struct {
 }
 
 func (n NSNumber) UnsignedIntValue() uint {
-	return uint(n.Send(sel_unsignedIntValue))
+	// unsignedIntValue returns a 32-bit unsigned int; the upper half of the register is undefined.
+	return uint(uint32(ObjcSend0(n.ID, sel_unsignedIntValue)))
 }
 
 type NSRunLoop struct {
@@ -260,23 +261,23 @@ type NSRunLoop struct {
 }
 
 func NSRunLoop_mainRunLoop() NSRunLoop {
-	return NSRunLoop{objc.ID(class_NSRunLoop).Send(sel_mainRunLoop)}
+	return NSRunLoop{objc.ID(ObjcSend0(objc.ID(class_NSRunLoop), sel_mainRunLoop))}
 }
 
 func NSRunLoop_currentRunLoop() NSRunLoop {
-	return NSRunLoop{objc.ID(class_NSRunLoop).Send(sel_currentRunLoop)}
+	return NSRunLoop{objc.ID(ObjcSend0(objc.ID(class_NSRunLoop), sel_currentRunLoop))}
 }
 
 func (r NSRunLoop) AddPort(port NSMachPort, mode NSRunLoopMode) {
-	r.Send(sel_addPort_forMode, port.ID, mode)
+	ObjcSend2(r.ID, sel_addPort_forMode, uintptr(port.ID), uintptr(NSString(mode).ID))
 }
 
 func (r NSRunLoop) Run() {
-	r.Send(sel_run)
+	ObjcSend0(r.ID, sel_run)
 }
 
 func (r NSRunLoop) PerformBlock(block objc.Block) {
-	r.Send(sel_performBlock, block)
+	ObjcSend1(r.ID, sel_performBlock, uintptr(block))
 }
 
 type NSRunLoopMode NSString
@@ -291,5 +292,5 @@ type NSMachPort struct {
 }
 
 func NSMachPort_port() NSMachPort {
-	return NSMachPort{objc.ID(class_NSMachPort).Send(sel_port)}
+	return NSMachPort{objc.ID(ObjcSend0(objc.ID(class_NSMachPort), sel_port))}
 }

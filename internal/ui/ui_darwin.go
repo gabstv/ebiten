@@ -358,7 +358,7 @@ var (
 // tick ensures stuck modifiers eventually clear. Must be called on the main
 // thread.
 func (u *glfwBackend) syncModKeysFromOS() {
-	flags := objc.Send[uint](objc.ID(class_NSEvent), sel_modifierFlags)
+	flags := cocoa.ObjcSend0(objc.ID(class_NSEvent), sel_modifierFlags)
 	const (
 		nsEventModifierFlagShift   = 1 << 17
 		nsEventModifierFlagControl = 1 << 18
@@ -384,7 +384,7 @@ func (u *glfwBackend) syncModKeysFromOS() {
 // syncLockKeysFromOS updates the lock key state to the current OS state.
 // Must be called on the main thread.
 func (u *glfwBackend) syncLockKeysFromOS() {
-	flags := objc.Send[uint](objc.ID(class_NSEvent), sel_modifierFlags)
+	flags := cocoa.ObjcSend0(objc.ID(class_NSEvent), sel_modifierFlags)
 	const nsEventModifierFlagCapsLock = 1 << 16
 
 	caps := NewLockKeyStateFromBool(flags&nsEventModifierFlagCapsLock != 0)
@@ -393,7 +393,7 @@ func (u *glfwBackend) syncLockKeysFromOS() {
 }
 
 func currentMouseLocation() (x, y int) {
-	point := objc.Send[cocoa.NSPoint](objc.ID(class_NSEvent), sel_mouseLocation)
+	point := cocoa.ObjcSendNSPoint(objc.ID(class_NSEvent), sel_mouseLocation)
 
 	x, y = int(point.X), int(point.Y)
 
@@ -427,22 +427,20 @@ func monitorFromWindowByOS(w *glfw.Window) (*Monitor, error) {
 		screen = window.Screen()
 	}
 	screenDictionary := screen.DeviceDescription()
-	screenNumberKey := cocoa.NSString_alloc().InitWithUTF8String("NSScreenNumber")
-	screenID := cocoa.NSNumber{ID: screenDictionary.ObjectForKey(screenNumberKey.ID)}
-	screenNumberKey.ID.Send(sel_release)
+	screenID := cocoa.NSNumber{ID: screenDictionary.ObjectForKey(nsStringScreenNumber.ID)}
 	aID := uintptr(screenID.UnsignedIntValue()) // CGDirectDisplayID
 	pool.Release()
-	for _, m := range theMonitors.append(nil) {
+	return theMonitors.find(func(m *Monitor) (bool, error) {
 		cocoaMonitor, err := m.m.GetCocoaMonitor()
 		if err != nil {
-			return nil, err
+			return false, err
 		}
-		if cocoaMonitor == aID {
-			return m, nil
-		}
-	}
-	return nil, nil
+		return cocoaMonitor == aID, nil
+	})
 }
+
+// nsStringScreenNumber is the NSScreenNumber device description key, created once.
+var nsStringScreenNumber = cocoa.NSString_alloc().InitWithUTF8String("NSScreenNumber")
 
 func (u *glfwBackend) nativeWindow() (uintptr, error) {
 	return u.window.GetCocoaWindow()

@@ -111,6 +111,27 @@ func (m *monitors) append(ms []*Monitor) []*Monitor {
 	return append(ms, m.monitors...)
 }
 
+// find returns the first monitor for which f reports true, without copying the monitor list.
+func (m *monitors) find(f func(*Monitor) (bool, error)) (*Monitor, error) {
+	if !m.updateCalled.Load() {
+		panic("ui: (*monitors).update must be called before (*monitors).find is called")
+	}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	for _, monitor := range m.monitors {
+		ok, err := f(monitor)
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			return monitor, nil
+		}
+	}
+	return nil, nil
+}
+
 func (m *monitors) contains(monitor *Monitor) bool {
 	if !m.updateCalled.Load() {
 		return false

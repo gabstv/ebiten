@@ -322,19 +322,23 @@ var (
 	sel_orderFrontStandardAboutPanel                   = objc.RegisterName("orderFrontStandardAboutPanel:")
 	sel_addLocalMonitorForEventsMatchingMask_handler   = objc.RegisterName("addLocalMonitorForEventsMatchingMask:handler:")
 	sel_addGlobalMonitorForEventsMatchingMask_handler  = objc.RegisterName("addGlobalMonitorForEventsMatchingMask:handler:")
+	sel_removeMonitor                                  = objc.RegisterName("removeMonitor:")
 
 	// NSProcessInfo
 	sel_processInfo = objc.RegisterName("processInfo")
 	sel_processName = objc.RegisterName("processName")
 
 	// NSBundle
-	sel_bundleIdentifier = objc.RegisterName("bundleIdentifier")
-	sel_mainBundle       = objc.RegisterName("mainBundle")
-	sel_infoDictionary   = objc.RegisterName("infoDictionary")
+	sel_bundleIdentifier                   = objc.RegisterName("bundleIdentifier")
+	sel_mainBundle                         = objc.RegisterName("mainBundle")
+	sel_infoDictionary                     = objc.RegisterName("infoDictionary")
+	sel_pathForResource_ofType             = objc.RegisterName("pathForResource:ofType:")
+	sel_loadNibNamed_owner_topLevelObjects = objc.RegisterName("loadNibNamed:owner:topLevelObjects:")
 
 	// NSNotificationCenter
 	sel_defaultCenter                    = objc.RegisterName("defaultCenter")
 	sel_addObserver_selector_name_object = objc.RegisterName("addObserver:selector:name:object:")
+	sel_removeObserver                   = objc.RegisterName("removeObserver:")
 
 	// NSMenu / NSMenuItem
 	sel_initWithTitle                         = objc.RegisterName("initWithTitle:")
@@ -414,6 +418,8 @@ var (
 	sel_frameRectForContentRect_styleMask           = objc.RegisterName("frameRectForContentRect:styleMask:")
 	sel_requestUserAttention                        = objc.RegisterName("requestUserAttention:")
 	sel_arrangeInFront                              = objc.RegisterName("arrangeInFront:")
+	sel_performMiniaturize                          = objc.RegisterName("performMiniaturize:")
+	sel_performZoom                                 = objc.RegisterName("performZoom:")
 	sel_convertRectToScreen                         = objc.RegisterName("convertRectToScreen:")
 	sel_mouseLocationOutsideOfEventStream           = objc.RegisterName("mouseLocationOutsideOfEventStream")
 
@@ -444,21 +450,23 @@ var (
 	sel_containsObject     = objc.RegisterName("containsObject:")
 
 	// NSCursor selectors
-	sel_arrowCursor               = objc.RegisterName("arrowCursor")
-	sel_IBeamCursor               = objc.RegisterName("IBeamCursor")
-	sel_crosshairCursor           = objc.RegisterName("crosshairCursor")
-	sel_closedHandCursor          = objc.RegisterName("closedHandCursor")
-	sel_openHandCursor            = objc.RegisterName("openHandCursor")
-	sel_pointingHandCursor        = objc.RegisterName("pointingHandCursor")
-	sel_resizeLeftCursor          = objc.RegisterName("resizeLeftCursor")
-	sel_resizeRightCursor         = objc.RegisterName("resizeRightCursor")
-	sel_resizeUpCursor            = objc.RegisterName("resizeUpCursor")
-	sel_resizeDownCursor          = objc.RegisterName("resizeDownCursor")
-	sel_operationNotAllowedCursor = objc.RegisterName("operationNotAllowedCursor")
-	sel_respondsToSelector        = objc.RegisterName("respondsToSelector:")
-	sel_performSelector           = objc.RegisterName("performSelector:")
-	sel_set                       = objc.RegisterName("set")
-	sel_unhide                    = objc.RegisterName("unhide")
+	sel_arrowCursor                = objc.RegisterName("arrowCursor")
+	sel_IBeamCursor                = objc.RegisterName("IBeamCursor")
+	sel_crosshairCursor            = objc.RegisterName("crosshairCursor")
+	sel_closedHandCursor           = objc.RegisterName("closedHandCursor")
+	sel_openHandCursor             = objc.RegisterName("openHandCursor")
+	sel_pointingHandCursor         = objc.RegisterName("pointingHandCursor")
+	sel_resizeLeftCursor           = objc.RegisterName("resizeLeftCursor")
+	sel_resizeRightCursor          = objc.RegisterName("resizeRightCursor")
+	sel_resizeUpCursor             = objc.RegisterName("resizeUpCursor")
+	sel_resizeDownCursor           = objc.RegisterName("resizeDownCursor")
+	sel_operationNotAllowedCursor  = objc.RegisterName("operationNotAllowedCursor")
+	sel_respondsToSelector         = objc.RegisterName("respondsToSelector:")
+	sel_performSelector            = objc.RegisterName("performSelector:")
+	sel_performSelector_withObject = objc.RegisterName("performSelector:withObject:")
+	sel_set                        = objc.RegisterName("set")
+	sel_setAppleMenu               = objc.RegisterName("setAppleMenu:")
+	sel_unhide                     = objc.RegisterName("unhide")
 
 	// NSImage / NSBitmapImageRep selectors
 	sel_initWithSize                                                                                                                                        = objc.RegisterName("initWithSize:")
@@ -514,7 +522,12 @@ var (
 	sel_applicationDidFinishLaunching        = objc.RegisterName("applicationDidFinishLaunching:")
 	sel_applicationDidHide                   = objc.RegisterName("applicationDidHide:")
 
+	// NSRunningApplication selectors
+	sel_currentApplication  = objc.RegisterName("currentApplication")
+	sel_isFinishedLaunching = objc.RegisterName("isFinishedLaunching")
+
 	// NSOpenGL selectors
+	sel_update                              = objc.RegisterName("update")
 	sel_initWithAttributes                  = objc.RegisterName("initWithAttributes:")
 	sel_initWithFormat_shareContext         = objc.RegisterName("initWithFormat:shareContext:")
 	sel_makeCurrentContext                  = objc.RegisterName("makeCurrentContext")
